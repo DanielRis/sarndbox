@@ -71,6 +71,8 @@ class HandExtractor;
 typedef Misc::FunctionCall<GLContextData&> AddWaterFunction;
 class RemoteServer;
 class WaterRenderer;
+class DinosaurEcosystem;
+class DinosaurRenderer;
 
 class Sandbox:public Vrui::Application,public GLObject
 	{
@@ -226,7 +228,10 @@ class Sandbox:public Vrui::Application,public GLObject
 	GLMotif::TextField* frameRateTextField;
 	GLMotif::TextFieldSlider* waterAttenuationSlider;
 	int controlPipeFd; // File descriptor of an optional named pipe to send control commands to a running AR Sandbox
-	
+	DinosaurEcosystem* dinosaurEcosystem; // Dinosaur ecosystem simulation
+	DinosaurRenderer* dinosaurRenderer; // Renderer for dinosaur sprites
+	bool dinosaursEnabled; // Flag to enable/disable dinosaur rendering
+
 	/* Private methods: */
 	void rawDepthFrameDispatcher(const Kinect::FrameBuffer& frameBuffer); // Callback receiving raw depth frames from the Kinect camera; forwards them to the frame filter and rain maker objects
 	void receiveFilteredFrame(const Kinect::FrameBuffer& frameBuffer); // Callback receiving filtered depth frames from the filter object

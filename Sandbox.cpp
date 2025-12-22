@@ -108,6 +108,8 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #include "HandExtractor.h"
 #include "RemoteServer.h"
 #include "WaterRenderer.h"
+#include "DinosaurEcosystem.h"
+#include "DinosaurRenderer.h"
 #include "GlobalWaterTool.h"
 #include "LocalWaterTool.h"
 #include "DEMTool.h"
@@ -1045,6 +1047,34 @@ Sandbox::Sandbox(int& argc,char**& argv)
 	sun->getLight().position=GLLight::Position(1,0,1,0);
 	#endif
 	
+	/* Initialize the dinosaur ecosystem */
+	dinosaurEcosystem=0;
+	dinosaurRenderer=0;
+	dinosaursEnabled=true;
+	if(waterTable!=0)
+		{
+		/* Create dinosaur ecosystem and renderer */
+		dinosaurEcosystem=new DinosaurEcosystem(waterTable);
+		dinosaurRenderer=new DinosaurRenderer(waterTable);
+
+		/* Set sandbox bounds from bbox */
+		DinosaurEcosystem::Bounds dinoBounds;
+		dinoBounds.minX=bbox.min[0];
+		dinoBounds.maxX=bbox.max[0];
+		dinoBounds.minY=bbox.min[1];
+		dinoBounds.maxY=bbox.max[1];
+		dinoBounds.minZ=bbox.min[2];
+		dinoBounds.maxZ=bbox.max[2];
+		dinosaurEcosystem->setBounds(dinoBounds);
+
+		/* Spawn initial dinosaur population */
+		dinosaurEcosystem->spawnInitialPopulation();
+
+		std::cout<<"Dinosaur ecosystem initialized with "
+		         <<dinosaurEcosystem->getHerbivoreCount()<<" herbivores and "
+		         <<dinosaurEcosystem->getPredatorCount()<<" predators"<<std::endl;
+		}
+
 	/* Create the GUI: */
 	mainMenu=createMainMenu();
 	Vrui::setMainMenu(mainMenu);
@@ -1082,6 +1112,8 @@ Sandbox::~Sandbox(void)
 	delete frameFilter;
 	
 	/* Delete helper objects: */
+	delete dinosaurEcosystem;
+	delete dinosaurRenderer;
 	delete waterTable;
 	delete depthImageRenderer;
 	delete handExtractor;
@@ -1191,7 +1223,29 @@ void Sandbox::frame(void)
 	/* Update all surface renderers: */
 	for(std::vector<RenderSettings>::iterator rsIt=renderSettings.begin();rsIt!=renderSettings.end();++rsIt)
 		rsIt->surfaceRenderer->setAnimationTime(Vrui::getApplicationTime());
-	
+
+	/* Update dinosaur ecosystem */
+	if(dinosaurEcosystem!=0 && dinosaursEnabled)
+		{
+		/* Pass hand positions to ecosystem for flee behavior */
+		if(handExtractor!=0)
+			{
+			const HandExtractor::HandList& hands=handExtractor->getLockedExtractedHands();
+			std::vector<Point> handPositions;
+			for(HandExtractor::HandList::const_iterator hIt=hands.begin();hIt!=hands.end();++hIt)
+				{
+				/* Convert hand centroid to world coordinates */
+				Point handPos(hIt->center[0],hIt->center[1],0.0);
+				handPositions.push_back(handPos);
+				}
+			dinosaurEcosystem->setDetectedHands(handPositions);
+			}
+
+		/* Update dinosaur simulation */
+		float deltaTime=float(Vrui::getFrameTime());
+		dinosaurEcosystem->update(deltaTime);
+		}
+
 	/* Check if there is a control command on the control pipe: */
 	if(controlPipeFd>=0)
 		{
@@ -1672,7 +1726,17 @@ void Sandbox::display(GLContextData& contextData) const
 		rs.waterRenderer->render(projection,ds.modelviewNavigational,contextData);
 		glDisable(GL_BLEND);
 		}
-	
+
+	/* Draw dinosaurs */
+	if(dinosaurRenderer!=0 && dinosaursEnabled && dinosaurEcosystem!=0)
+		{
+		dinosaurRenderer->render(
+			dinosaurEcosystem->getDinosaurs(),
+			projection,
+			ds.modelviewNavigational,
+			contextData);
+		}
+
 	/* Call the remote server's render method: */
 	if(remoteServer!=0)
 		{

@@ -101,6 +101,7 @@ Configure-Begin:
 	@cp Config.h Config.h.temp
 	@$(call CONFIG_SETSTRINGVAR,Config.h.temp,CONFIG_CONFIGDIR,$(ETCINSTALLDIR))
 	@$(call CONFIG_SETSTRINGVAR,Config.h.temp,CONFIG_SHADERDIR,$(SHAREINSTALLDIR)/Shaders)
+	@$(call CONFIG_SETSTRINGVAR,Config.h.temp,CONFIG_SPRITEDIR,$(SHAREINSTALLDIR)/Sprites)
 	@if ! diff Config.h.temp Config.h > /dev/null ; then cp Config.h.temp Config.h ; fi
 	@rm Config.h.temp
 
@@ -111,6 +112,7 @@ Configure-Install: Configure-Begin
 	@echo "Configuration data directory: $(ETCINSTALLDIR)"
 	@echo "Resource data directory: $(SHAREINSTALLDIR)"
 	@echo "Shader source code directory: $(SHAREINSTALLDIR)/Shaders"
+	@echo "Sprite assets directory: $(SHAREINSTALLDIR)/Sprites"
 
 .PHONY: Configure-End
 Configure-End: Configure-Install
@@ -162,9 +164,14 @@ SARNDBOX_SOURCES = FrameFilter.cpp \
                    DEM.cpp \
                    DEMTool.cpp \
                    BathymetrySaverTool.cpp \
+                   Dinosaur.cpp \
+                   DinosaurRenderer.cpp \
+                   DinosaurEcosystem.cpp \
                    Sandbox.cpp
 
 $(EXEDIR)/SARndbox: PACKAGES += MYKINECT MYGLMOTIF MYIMAGES MYGLSUPPORT MYGLWRAPPERS MYIO
+$(EXEDIR)/SARndbox: EXTRACFLAGS += $(shell pkg-config --cflags libpng)
+$(EXEDIR)/SARndbox: EXTRALINKFLAGS += $(shell pkg-config --libs libpng)
 $(EXEDIR)/SARndbox: $(SARNDBOX_SOURCES:%.cpp=$(OBJDIR)/%.o)
 .PHONY: SARndbox
 SARndbox: $(EXEDIR)/SARndbox
@@ -194,3 +201,5 @@ install: $(ALL)
 	@install -d $(SHAREINSTALLDIR)
 	@install -d $(SHAREINSTALLDIR)/Shaders
 	@install -m u=rw,go=r $(RESOURCEDIR)/Shaders/* $(SHAREINSTALLDIR)/Shaders
+	@install -d $(SHAREINSTALLDIR)/Sprites
+	@cp -r $(RESOURCEDIR)/Sprites/* $(SHAREINSTALLDIR)/Sprites/
