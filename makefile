@@ -1,6 +1,6 @@
 ########################################################################
 # Makefile for the Augmented Reality Sandbox.
-# Copyright (c) 2012-2018 Oliver Kreylos
+# Copyright (c) 2012-2021 Oliver Kreylos
 #
 # This file is part of the WhyTools Build Environment.
 # 
@@ -24,7 +24,7 @@
 # matches the default Vrui installation; if Vrui's installation
 # directory was changed during Vrui's installation, the directory below
 # must be adapted.
-VRUI_MAKEDIR := /usr/local/share/Vrui-4.6/make
+VRUI_MAKEDIR := /usr/local/share/Vrui-8.0/make
 ifdef DEBUG
   VRUI_MAKEDIR := $(VRUI_MAKEDIR)/debug
 endif
@@ -47,7 +47,7 @@ INSTALLDIR := $(PWD)
 # clobbering each other. The value should be identical to the
 # major.minor version number found in VERSION in the root package
 # directory.
-VERSION = 2.6
+VERSION = 2.8
 
 # Set up resource directories: */
 CONFIGDIR = etc/SARndbox-$(VERSION)
@@ -76,14 +76,15 @@ SHAREINSTALLDIR = $(INSTALLDIR)/$(RESOURCEDIR)
 # (Supported packages can be found in $(VRUI_MAKEDIR)/Packages.*)
 ########################################################################
 
-PACKAGES = MYKINECT MYVRUI
+PACKAGES = MYVRUI MYGLGEOMETRY MYGEOMETRY MYMATH MYCOMM MYTHREADS MYMISC GL
 
 ########################################################################
 # Specify all final targets
 ########################################################################
 
 ALL = $(EXEDIR)/CalibrateProjector \
-      $(EXEDIR)/SARndbox
+      $(EXEDIR)/SARndbox \
+      $(EXEDIR)/SARndboxClient
 
 PHONY: all
 all: $(ALL)
@@ -138,6 +139,7 @@ include $(VRUI_MAKEDIR)/BasicMakefile
 # Calibration utility for Kinect 3D camera and projector:
 #
 
+$(EXEDIR)/CalibrateProjector: PACKAGES += MYKINECT MYIO
 $(EXEDIR)/CalibrateProjector: $(OBJDIR)/CalibrateProjector.o
 .PHONY: CalibrateProjector
 CalibrateProjector: $(EXEDIR)/CalibrateProjector
@@ -154,6 +156,7 @@ SARNDBOX_SOURCES = FrameFilter.cpp \
                    WaterTable2.cpp \
                    WaterRenderer.cpp \
                    HandExtractor.cpp \
+                   RemoteServer.cpp \
                    GlobalWaterTool.cpp \
                    LocalWaterTool.cpp \
                    DEM.cpp \
@@ -161,9 +164,21 @@ SARNDBOX_SOURCES = FrameFilter.cpp \
                    BathymetrySaverTool.cpp \
                    Sandbox.cpp
 
+$(EXEDIR)/SARndbox: PACKAGES += MYKINECT MYGLMOTIF MYIMAGES MYGLSUPPORT MYGLWRAPPERS MYIO
 $(EXEDIR)/SARndbox: $(SARNDBOX_SOURCES:%.cpp=$(OBJDIR)/%.o)
 .PHONY: SARndbox
 SARndbox: $(EXEDIR)/SARndbox
+
+#
+# The Augmented Reality Sandbox remote client application:
+#
+
+SARNDBOXCLIENT_SOURCES = SandboxClient.cpp
+
+$(EXEDIR)/SARndboxClient: PACKAGES += MYGLSUPPORT MYGLWRAPPERS
+$(EXEDIR)/SARndboxClient: $(SARNDBOXCLIENT_SOURCES:%.cpp=$(OBJDIR)/%.o)
+.PHONY: SARndboxClient
+SARndboxClient: $(EXEDIR)/SARndboxClient
 
 ########################################################################
 # Specify installation rules

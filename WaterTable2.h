@@ -2,7 +2,7 @@
 WaterTable2 - Class to simulate water flowing over a surface using
 improved water flow simulation based on Saint-Venant system of partial
 differenctial equations.
-Copyright (c) 2012-2016 Oliver Kreylos
+Copyright (c) 2012-2019 Oliver Kreylos
 
 This file is part of the Augmented Reality Sandbox (SARndbox).
 
@@ -109,9 +109,6 @@ class WaterTable2:public GLObject
 	std::vector<const AddWaterFunction*> renderFunctions; // A list of functions that are called after each water flow simulation step to locally add or remove water from the water table
 	GLfloat waterDeposit; // A fixed amount of water added at every iteration of the flow simulation, for evaporation etc.
 	bool dryBoundary; // Flag whether to enforce dry boundary conditions at the end of each simulation step
-	unsigned int readBathymetryRequest; // Request token to read back the current bathymetry grid from the GPU
-	mutable GLfloat* readBathymetryBuffer; // Buffer into which to read the current bathymetry grid
-	mutable unsigned int readBathymetryReply; // Reply token after reading back the current bathymetry grid
 	
 	/* Private methods: */
 	void calcTransformations(void); // Calculates derived transformations
@@ -176,11 +173,6 @@ class WaterTable2:public GLObject
 	GLsizei getBathymetrySize(int index) const // Returns the width or height of the bathymetry grid
 		{
 		return size[index]-1;
-		}
-	bool requestBathymetry(GLfloat* newReadBathymetryBuffer); // Requests reading back the current bathymetry grid from the GPU during the next rendering cycle; returns true if request can be granted
-	bool haveBathymetry(void) const // Returns true if the most recent bathymetry request has been fulfilled
-		{
-		return readBathymetryReply==readBathymetryRequest;
 		}
 	};
 

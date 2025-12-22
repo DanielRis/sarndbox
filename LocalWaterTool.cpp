@@ -1,7 +1,7 @@
 /***********************************************************************
 LocalWaterTool - Tool class to locally add or remove water from an
 augmented reality sandbox.
-Copyright (c) 2012-2013 Oliver Kreylos
+Copyright (c) 2012-2020 Oliver Kreylos
 
 This file is part of the Augmented Reality Sandbox (SARndbox).
 
@@ -26,10 +26,8 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #include <GL/gl.h>
 #include <GL/Extensions/GLARBVertexProgram.h>
 #include <GL/GLGeometryWrappers.h>
-#include <GL/GLTransformationWrappers.h>
 #include <Vrui/Vrui.h>
 #include <Vrui/ToolManager.h>
-#include <Vrui/DisplayState.h>
 
 #include "WaterTable2.h"
 #include "Sandbox.h"
@@ -114,9 +112,8 @@ void LocalWaterTool::glRenderActionTransparent(GLContextData& contextData) const
 	{
 	glPushAttrib(GL_ENABLE_BIT|GL_POLYGON_BIT);
 	
-	/* Go to navigational coordinates: */
-	glPushMatrix();
-	glLoadMatrix(Vrui::getDisplayState(contextData).modelviewNavigational);
+	/* Go to navigational space: */
+	Vrui::goToNavigationalSpace(contextData);
 	
 	/* Get the current rain disk position and size in camera coordinates: */
 	Vrui::Point rainPos=Vrui::getInverseNavigationTransformation().transform(getButtonDevicePosition(0));
@@ -165,7 +162,9 @@ void LocalWaterTool::glRenderActionTransparent(GLContextData& contextData) const
 		}
 	glEnd();
 	
+	/* Return to physical space: */
 	glPopMatrix();
+	
 	glPopAttrib();
 	}
 
