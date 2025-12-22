@@ -47,6 +47,9 @@ RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
         fonts-freefont-ttf \
         nvidia-cuda-toolkit \
         nvidia-cuda-toolkit-gcc \
+        fakeroot \
+        debhelper \
+        dpkg-dev \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 

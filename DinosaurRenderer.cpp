@@ -25,7 +25,10 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #include <iostream>
 #include <stdexcept>
 #include <cmath>
-#include <png.h>
+
+#include <Images/RGBImage.h>
+#include <Images/RGBAImage.h>
+#include <Images/ReadImageFile.h>
 
 #include <GL/gl.h>
 #include <GL/GLContextData.h>
@@ -41,110 +44,6 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #include "WaterTable2.h"
 #include "ShaderHelper.h"
 #include "Config.h"
-
-/*******************************************
-Helper function to load PNG with alpha
-*******************************************/
-
-struct PNGImage
-	{
-	unsigned int width;
-	unsigned int height;
-	unsigned char* data; // RGBA format
-	};
-
-static bool loadPNG(const char* filename, PNGImage& image)
-	{
-	FILE* fp = fopen(filename, "rb");
-	if(!fp)
-		{
-		std::cerr << "DinosaurRenderer: Cannot open PNG file: " << filename << std::endl;
-		return false;
-		}
-
-	/* Check PNG signature */
-	unsigned char header[8];
-	fread(header, 1, 8, fp);
-	if(png_sig_cmp(header, 0, 8))
-		{
-		std::cerr << "DinosaurRenderer: Not a PNG file: " << filename << std::endl;
-		fclose(fp);
-		return false;
-		}
-
-	/* Create PNG structures */
-	png_structp png = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
-	if(!png)
-		{
-		fclose(fp);
-		return false;
-		}
-
-	png_infop info = png_create_info_struct(png);
-	if(!info)
-		{
-		png_destroy_read_struct(&png, NULL, NULL);
-		fclose(fp);
-		return false;
-		}
-
-	if(setjmp(png_jmpbuf(png)))
-		{
-		png_destroy_read_struct(&png, &info, NULL);
-		fclose(fp);
-		return false;
-		}
-
-	png_init_io(png, fp);
-	png_set_sig_bytes(png, 8);
-	png_read_info(png, info);
-
-	image.width = png_get_image_width(png, info);
-	image.height = png_get_image_height(png, info);
-	png_byte colorType = png_get_color_type(png, info);
-	png_byte bitDepth = png_get_bit_depth(png, info);
-
-	/* Convert to RGBA */
-	if(bitDepth == 16)
-		png_set_strip_16(png);
-
-	if(colorType == PNG_COLOR_TYPE_PALETTE)
-		png_set_palette_to_rgb(png);
-
-	if(colorType == PNG_COLOR_TYPE_GRAY && bitDepth < 8)
-		png_set_expand_gray_1_2_4_to_8(png);
-
-	if(png_get_valid(png, info, PNG_INFO_tRNS))
-		png_set_tRNS_to_alpha(png);
-
-	if(colorType == PNG_COLOR_TYPE_RGB ||
-	   colorType == PNG_COLOR_TYPE_GRAY ||
-	   colorType == PNG_COLOR_TYPE_PALETTE)
-		png_set_filler(png, 0xFF, PNG_FILLER_AFTER);
-
-	if(colorType == PNG_COLOR_TYPE_GRAY ||
-	   colorType == PNG_COLOR_TYPE_GRAY_ALPHA)
-		png_set_gray_to_rgb(png);
-
-	png_read_update_info(png, info);
-
-	/* Allocate image data */
-	png_size_t rowBytes = png_get_rowbytes(png, info);
-	image.data = new unsigned char[image.height * rowBytes];
-
-	/* Read rows (PNG is top-to-bottom, OpenGL expects bottom-to-top) */
-	png_bytep* rowPointers = new png_bytep[image.height];
-	for(unsigned int y = 0; y < image.height; ++y)
-		rowPointers[image.height - 1 - y] = image.data + y * rowBytes;
-
-	png_read_image(png, rowPointers);
-
-	delete[] rowPointers;
-	png_destroy_read_struct(&png, &info, NULL);
-	fclose(fp);
-
-	return true;
-	}
 
 /********************************************
 Methods of class DinosaurRenderer::DataItem:
@@ -186,13 +85,21 @@ GLuint DinosaurRenderer::DataItem::getOrLoadTexture(const std::string& path)
 	if(it != spriteTextures.end())
 		return it->second;
 
-	/* Load PNG image */
-	PNGImage image;
-	if(!loadPNG(path.c_str(), image))
+	/* Load image using Vrui's Images library */
+	Images::RGBImage rgbImage;
+	try
 		{
-		std::cerr << "DinosaurRenderer: Failed to load sprite: " << path << std::endl;
+		rgbImage = Images::readImageFile(path.c_str());
+		}
+	catch(const std::exception& e)
+		{
+		std::cerr << "DinosaurRenderer: Failed to load sprite: " << path << " (" << e.what() << ")" << std::endl;
 		return 0;
 		}
+
+	/* Get image dimensions */
+	unsigned int width = rgbImage.getSize(0);
+	unsigned int height = rgbImage.getSize(1);
 
 	/* Create OpenGL texture */
 	GLuint textureId;
@@ -205,18 +112,15 @@ GLuint DinosaurRenderer::DataItem::getOrLoadTexture(const std::string& path)
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-	/* Upload texture data */
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, image.width, image.height, 0,
-	             GL_RGBA, GL_UNSIGNED_BYTE, image.data);
-
-	/* Clean up image data */
-	delete[] image.data;
+	/* Upload texture data as RGB (sprites will need color-keying for transparency) */
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0,
+	             GL_RGB, GL_UNSIGNED_BYTE, rgbImage.getPixels());
 
 	/* Cache and return */
 	spriteTextures[path] = textureId;
 
 	std::cout << "DinosaurRenderer: Loaded sprite " << path
-	          << " (" << image.width << "x" << image.height << ")" << std::endl;
+	          << " (" << width << "x" << height << ")" << std::endl;
 
 	return textureId;
 	}

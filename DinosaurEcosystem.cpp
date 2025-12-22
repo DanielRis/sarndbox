@@ -85,7 +85,7 @@ DinosaurEcosystem::TerrainInfo DinosaurEcosystem::queryTerrain(const Point& pos)
 	/* Get terrain data from water table's domain */
 	const WaterTable2::Box& domain = waterTable->getDomain();
 	const GLfloat* cellSize = waterTable->getCellSize();
-	const unsigned int* gridSize = waterTable->getSize();
+	const GLsizei* gridSize = waterTable->getSize();
 
 	/* Transform position to grid coordinates */
 	Scalar gx = (pos[0] - domain.min[0]) / cellSize[0];

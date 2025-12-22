@@ -22,9 +22,9 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #ifndef CONFIG_INCLUDED
 #define CONFIG_INCLUDED
 
-#define CONFIG_CONFIGDIR "/workspaces/sarndbox/etc/SARndbox-2.8"
-#define CONFIG_SHADERDIR "/workspaces/sarndbox/share/SARndbox-2.8/Shaders"
-#define CONFIG_SPRITEDIR "/workspaces/sarndbox/share/SARndbox-2.8/Sprites"
+#define CONFIG_CONFIGDIR "/usr/etc/SARndbox-2.8"
+#define CONFIG_SHADERDIR "/usr/share/SARndbox-2.8/Shaders"
+#define CONFIG_SPRITEDIR "/usr/share/SARndbox-2.8/Sprites"
 
 #define CONFIG_DEFAULTCONFIGFILENAME "SARndbox.cfg"
 #define CONFIG_DEFAULTBOXLAYOUTFILENAME "BoxLayout.txt"

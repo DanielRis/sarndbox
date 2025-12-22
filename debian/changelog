@@ -1,9 +1,0 @@
-sarndbox (2.8-1) stable; urgency=medium
-
-  * Added dinosaur ecosystem with animated sprites
-  * Predator-prey dynamics with T-Rex, Velociraptors, and herbivores
-  * Dinosaurs flee from hands and avoid water/lava
-  * Integrated sprite rendering pipeline
-  * Water simulation improvements
-
- -- SARndbox Developers <sarndbox@example.com>  Sun, 22 Dec 2024 12:00:00 +0000
