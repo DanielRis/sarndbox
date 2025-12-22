@@ -192,14 +192,59 @@ SARndboxClient: $(EXEDIR)/SARndboxClient
 ########################################################################
 
 install: $(ALL)
-	@echo Installing the Augmented Reality Sandbox in $(INSTALLDIR)...
-	@install -d $(INSTALLDIR)
-	@install -d $(EXECUTABLEINSTALLDIR)
-	@install $(ALL) $(EXECUTABLEINSTALLDIR)
-	@install -d $(ETCINSTALLDIR)
-	@install -m u=rw,go=r $(CONFIGDIR)/* $(ETCINSTALLDIR)
-	@install -d $(SHAREINSTALLDIR)
-	@install -d $(SHAREINSTALLDIR)/Shaders
-	@install -m u=rw,go=r $(RESOURCEDIR)/Shaders/* $(SHAREINSTALLDIR)/Shaders
-	@install -d $(SHAREINSTALLDIR)/Sprites
-	@cp -r $(RESOURCEDIR)/Sprites/* $(SHAREINSTALLDIR)/Sprites/
+	@echo Installing the Augmented Reality Sandbox in $(DESTDIR)$(INSTALLDIR)...
+	@install -d $(DESTDIR)$(INSTALLDIR)
+	@install -d $(DESTDIR)$(EXECUTABLEINSTALLDIR)
+	@install $(ALL) $(DESTDIR)$(EXECUTABLEINSTALLDIR)
+	@install -d $(DESTDIR)$(ETCINSTALLDIR)
+	@install -m u=rw,go=r $(CONFIGDIR)/* $(DESTDIR)$(ETCINSTALLDIR)
+	@install -d $(DESTDIR)$(SHAREINSTALLDIR)
+	@install -d $(DESTDIR)$(SHAREINSTALLDIR)/Shaders
+	@install -m u=rw,go=r $(RESOURCEDIR)/Shaders/* $(DESTDIR)$(SHAREINSTALLDIR)/Shaders
+	@install -d $(DESTDIR)$(SHAREINSTALLDIR)/Sprites
+	@cp -r $(RESOURCEDIR)/Sprites/* $(DESTDIR)$(SHAREINSTALLDIR)/Sprites/
+
+########################################################################
+# Create Debian package
+########################################################################
+
+.PHONY: deb
+deb:
+	dpkg-buildpackage -us -uc -b
+	@echo ""
+	@echo "========================================"
+	@echo "Package created: ../sarndbox_2.8-1_amd64.deb"
+	@echo ""
+	@echo "To install on target machine:"
+	@echo "  sudo dpkg -i sarndbox_2.8-1_amd64.deb"
+	@echo "  sudo apt-get install -f  # to install dependencies"
+	@echo "========================================"
+
+########################################################################
+# Create distribution package in .out folder
+########################################################################
+
+OUTDIR = .out
+
+.PHONY: dist
+dist:
+	@echo "=== Creating distribution package ==="
+	@echo ""
+	@echo "[1/3] Cleaning .out folder..."
+	@rm -rf $(OUTDIR)
+	@mkdir -p $(OUTDIR)
+	@echo "[2/3] Building Debian package..."
+	dpkg-buildpackage -us -uc -b
+	@echo "[3/3] Copying files to .out..."
+	@cp ../sarndbox_$(VERSION)-1_amd64.deb $(OUTDIR)/
+	@cp install-dependencies.sh $(OUTDIR)/
+	@echo ""
+	@echo "========================================"
+	@echo "Distribution package ready in: $(OUTDIR)/"
+	@echo ""
+	@ls -lh $(OUTDIR)/
+	@echo ""
+	@echo "Copy this folder to your target machine and run:"
+	@echo "  1. sudo ./install-dependencies.sh"
+	@echo "  2. sudo dpkg -i sarndbox_$(VERSION)-1_amd64.deb"
+	@echo "========================================"
