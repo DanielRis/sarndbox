@@ -110,6 +110,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #include "WaterRenderer.h"
 #include "DinosaurEcosystem.h"
 #include "DinosaurRenderer.h"
+#include "TerrainQuery.h"
 #include "GlobalWaterTool.h"
 #include "LocalWaterTool.h"
 #include "DEMTool.h"
@@ -1080,6 +1081,13 @@ Sandbox::Sandbox(int& argc,char**& argv)
 	sun->getLight().position=GLLight::Position(1,0,1,0);
 	#endif
 	
+	/* Initialize the terrain query system */
+	terrainQuery=0;
+	if(waterTable!=0)
+		{
+		terrainQuery=new TerrainQuery(waterTable);
+		}
+
 	/* Initialize the dinosaur ecosystem */
 	dinosaurEcosystem=0;
 	dinosaurRenderer=0;
@@ -1101,13 +1109,8 @@ Sandbox::Sandbox(int& argc,char**& argv)
 		dinoBounds.maxZ=bbox.max[2];
 		dinosaurEcosystem->setBounds(dinoBounds);
 
-		/* Set water level threshold - water pools below ~30% of elevation range */
-		Scalar waterLevel = dinoBounds.minZ + (dinoBounds.maxZ - dinoBounds.minZ) * 0.3;
-		dinosaurEcosystem->setWaterLevelThreshold(waterLevel);
-		std::cout << "Dinosaur water level threshold: " << waterLevel << std::endl;
-
-		/* Set depth image renderer for terrain height sampling */
-		dinosaurEcosystem->setDepthImageRenderer(depthImageRenderer);
+		/* Set terrain query system for proper height/water sampling */
+		dinosaurEcosystem->setTerrainQuery(terrainQuery);
 
 		/* Set movement speed scale to match sprite size */
 		dinosaurEcosystem->setSpeedScale(dinosaurScale);
@@ -1159,6 +1162,7 @@ Sandbox::~Sandbox(void)
 	/* Delete helper objects: */
 	delete dinosaurEcosystem;
 	delete dinosaurRenderer;
+	delete terrainQuery;
 	delete waterTable;
 	delete depthImageRenderer;
 	delete handExtractor;
@@ -1591,8 +1595,12 @@ void Sandbox::display(GLContextData& contextData) const
 		
 		/* Mark the water simulation state as up-to-date for this frame: */
 		dataItem->waterTableTime=Vrui::getApplicationTime();
+
+		/* Update terrain query cache from GPU textures */
+		if(terrainQuery!=0)
+			terrainQuery->update(contextData);
 		}
-	
+
 	/* Calculate the projection matrix: */
 	PTransform projection=ds.projection;
 	if(rs.fixProjectorView&&rs.projectorTransformValid)

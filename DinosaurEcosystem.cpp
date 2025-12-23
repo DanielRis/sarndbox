@@ -28,7 +28,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #include <chrono>
 
 #include "WaterTable2.h"
-#include "DepthImageRenderer.h"
+#include "TerrainQuery.h"
 
 /**********************************
 Methods of class DinosaurEcosystem:
@@ -36,12 +36,9 @@ Methods of class DinosaurEcosystem:
 
 DinosaurEcosystem::DinosaurEcosystem(const WaterTable2* sWaterTable)
 	:waterTable(sWaterTable),
-	 depthRenderer(0),
+	 terrainQuery(0),
 	 nextDinosaurId(0),
 	 randomFloat(0.0f, 1.0f),
-	 lavaElevationThreshold(-10.0),  // Below this is lava
-	 waterLevelThreshold(0.0),       // Will be set from domain bounds
-	 waterAvoidanceDepth(0.1),       // Small threshold to trigger on any water
 	 handFleeRadius(0.15),           // Flee from hands within this radius
 	 predatorSightRange(0.20),       // Predators can see this far
 	 fleeDistance(0.25),             // Flee this far before calming down
@@ -71,19 +68,9 @@ void DinosaurEcosystem::setBounds(const Bounds& newBounds)
 	bounds = newBounds;
 	}
 
-void DinosaurEcosystem::setLavaThreshold(Scalar threshold)
+void DinosaurEcosystem::setTerrainQuery(const TerrainQuery* query)
 	{
-	lavaElevationThreshold = threshold;
-	}
-
-void DinosaurEcosystem::setWaterLevelThreshold(Scalar threshold)
-	{
-	waterLevelThreshold = threshold;
-	}
-
-void DinosaurEcosystem::setDepthImageRenderer(const DepthImageRenderer* renderer)
-	{
-	depthRenderer = renderer;
+	terrainQuery = query;
 	}
 
 void DinosaurEcosystem::setSpeedScale(Scalar scale)
@@ -93,55 +80,26 @@ void DinosaurEcosystem::setSpeedScale(Scalar scale)
 
 DinosaurEcosystem::TerrainInfo DinosaurEcosystem::queryTerrain(const Point& pos) const
 	{
-	/* Debug: limit output to first N calls */
-	static int debugCount = 0;
-	bool doDebug = (debugCount < 5);
-	if(doDebug) ++debugCount;
-
 	TerrainInfo info;
 	info.elevation = 0.0;
 	info.waterDepth = 0.0;
 	info.isLava = false;
 
-	/* Get terrain height from depth image using domain bounds for coordinate mapping */
+	/* Use TerrainQuery if available (reads actual GPU textures) */
+	if(terrainQuery != 0 && terrainQuery->isDataValid())
+		{
+		TerrainQuery::TerrainInfo tqInfo = terrainQuery->query(pos[0], pos[1]);
+		info.elevation = tqInfo.terrainHeight;
+		info.waterDepth = tqInfo.waterDepth;
+		info.isLava = (tqInfo.type == TerrainQuery::TERRAIN_LAVA);
+		return info;
+		}
+
+	/* Fallback to domain midpoint if TerrainQuery not available */
 	if(waterTable != 0)
 		{
 		const WaterTable2::Box& domain = waterTable->getDomain();
-		Scalar domainMin[3] = {domain.min[0], domain.min[1], domain.min[2]};
-		Scalar domainMax[3] = {domain.max[0], domain.max[1], domain.max[2]};
-
-		if(depthRenderer != 0)
-			{
-			info.elevation = depthRenderer->getHeightAt(pos[0], pos[1], domainMin, domainMax);
-			if(doDebug)
-				std::cout << "queryTerrain: pos=(" << pos[0] << "," << pos[1] << ") -> elevation=" << info.elevation << std::endl;
-			}
-		else
-			{
-			/* Fallback to domain midpoint */
-			info.elevation = (domain.min[2] + domain.max[2]) * 0.5;
-			if(doDebug)
-				std::cout << "queryTerrain: fallback elevation=" << info.elevation << std::endl;
-			}
-		}
-
-	/* Check if below lava threshold */
-	info.isLava = (info.elevation < lavaElevationThreshold);
-
-	/* Estimate water depth based on water level threshold
-	   Water pools in areas below the threshold */
-	if(info.isLava)
-		{
-		info.waterDepth = 0.0; // Lava area, no water
-		}
-	else if(info.elevation < waterLevelThreshold)
-		{
-		/* Terrain is below water level - estimate water depth */
-		info.waterDepth = waterLevelThreshold - info.elevation;
-		}
-	else
-		{
-		info.waterDepth = 0.0; // Above water level
+		info.elevation = (domain.min[2] + domain.max[2]) * 0.5;
 		}
 
 	return info;
@@ -160,7 +118,7 @@ bool DinosaurEcosystem::isPositionSafe(const Point& pos) const
 	/* Unsafe if lava or deep water */
 	if(terrain.isLava)
 		return false;
-	if(terrain.waterDepth > waterAvoidanceDepth)
+	if(terrain.waterDepth > 0.0)
 		return false;
 
 	return true;
@@ -331,7 +289,7 @@ bool DinosaurEcosystem::findNearestThreat(const Dinosaur& dino, Point& threatPos
 		{
 		/* Find direction away from lowest point (center of sandbox usually) */
 		threatPos = dino.position;
-		threatPos[2] = lavaElevationThreshold;
+		threatPos[2] = terrain.elevation;  // Use current terrain elevation
 		distance = 0.01;  // Very close threat!
 		foundThreat = true;
 		}
@@ -403,7 +361,7 @@ Vector DinosaurEcosystem::calculateAvoidanceVector(const Dinosaur& dino) const
 				avoidance[0] -= dx * 2.0;
 				avoidance[1] -= dy * 2.0;
 				}
-			if(terrain.waterDepth > waterAvoidanceDepth)
+			if(terrain.waterDepth > 0.0)
 				{
 				avoidance[0] -= dx * 1.0;
 				avoidance[1] -= dy * 1.0;
@@ -813,7 +771,7 @@ void DinosaurEcosystem::updateDinosaurMovement(Dinosaur& dino, float deltaTime)
 	Scalar targetZ = terrain.elevation;
 
 	/* Check for hazards - despawn if in lava or water */
-	if(terrain.isLava || terrain.waterDepth > waterAvoidanceDepth)
+	if(terrain.isLava || terrain.waterDepth > 0.0)
 		{
 		/* Dinosaur walked into hazard - trigger death */
 		dino.isAlive = false;

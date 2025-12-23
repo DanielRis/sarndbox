@@ -73,6 +73,7 @@ class RemoteServer;
 class WaterRenderer;
 class DinosaurEcosystem;
 class DinosaurRenderer;
+class TerrainQuery;
 
 class Sandbox:public Vrui::Application,public GLObject
 	{
@@ -231,6 +232,7 @@ class Sandbox:public Vrui::Application,public GLObject
 	int controlPipeFd; // File descriptor of an optional named pipe to send control commands to a running AR Sandbox
 	DinosaurEcosystem* dinosaurEcosystem; // Dinosaur ecosystem simulation
 	DinosaurRenderer* dinosaurRenderer; // Renderer for dinosaur sprites
+	TerrainQuery* terrainQuery; // Terrain and water query system
 	bool dinosaursEnabled; // Flag to enable/disable dinosaur rendering
 
 	/* Private methods: */

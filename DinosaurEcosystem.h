@@ -31,7 +31,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 
 /* Forward declarations */
 class WaterTable2;
-class DepthImageRenderer;
+class TerrainQuery;
 
 class DinosaurEcosystem
 	{
@@ -57,8 +57,8 @@ class DinosaurEcosystem
 	private:
 
 	/* Elements: */
-	const WaterTable2* waterTable;           // For terrain/water queries
-	const DepthImageRenderer* depthRenderer; // For terrain height sampling
+	const WaterTable2* waterTable;           // For domain bounds (legacy)
+	const TerrainQuery* terrainQuery;        // For terrain/water queries
 	Bounds bounds;                       // Sandbox boundaries
 	std::vector<Dinosaur> dinosaurs;     // All dinosaur instances
 	unsigned int nextDinosaurId;         // For unique IDs
@@ -68,9 +68,6 @@ class DinosaurEcosystem
 	std::uniform_real_distribution<float> randomFloat;
 
 	/* Simulation parameters */
-	Scalar lavaElevationThreshold;       // Elevation below which is "lava"
-	Scalar waterLevelThreshold;          // Elevation below which water pools
-	Scalar waterAvoidanceDepth;          // Water depth to start avoiding
 	Scalar handFleeRadius;               // Distance to flee from hands
 	Scalar predatorSightRange;           // How far predators can see prey
 	Scalar fleeDistance;                 // How far to flee before stopping
@@ -130,14 +127,8 @@ class DinosaurEcosystem
 	/* Set the sandbox bounds (call after calibration) */
 	void setBounds(const Bounds& newBounds);
 
-	/* Set lava elevation threshold */
-	void setLavaThreshold(Scalar threshold);
-
-	/* Set water level threshold (elevation below which water pools) */
-	void setWaterLevelThreshold(Scalar threshold);
-
-	/* Set the depth image renderer for terrain height sampling */
-	void setDepthImageRenderer(const DepthImageRenderer* renderer);
+	/* Set the terrain query system for terrain/water queries */
+	void setTerrainQuery(const TerrainQuery* query);
 
 	/* Set movement speed scale (should match sprite scale) */
 	void setSpeedScale(Scalar scale);

@@ -168,6 +168,7 @@ SARNDBOX_SOURCES = FrameFilter.cpp \
                    Dinosaur.cpp \
                    DinosaurRenderer.cpp \
                    DinosaurEcosystem.cpp \
+                   TerrainQuery.cpp \
                    Sandbox.cpp
 
 $(EXEDIR)/SARndbox: PACKAGES += MYKINECT MYGLMOTIF MYIMAGES MYGLSUPPORT MYGLWRAPPERS MYIO
