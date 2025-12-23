@@ -112,7 +112,7 @@ class DepthImageRenderer:public GLObject
 	void renderSurfaceTemplate(GLContextData& contextData) const; // Renders the template quad strip mesh using current OpenGL settings
 	void renderDepth(const PTransform& projectionModelview,GLContextData& contextData) const; // Renders the surface into a pure depth buffer, for early z culling or shadow passes etc.
 	void renderElevation(const PTransform& projectionModelview,GLContextData& contextData) const; // Renders the surface's elevation relative to the base plane into the current one-component floating-point valued frame buffer
-	Scalar getHeightAt(Scalar worldX, Scalar worldY) const; // Returns the terrain height at the given world X,Y position by sampling the depth image
+	Scalar getHeightAt(Scalar worldX, Scalar worldY, const Scalar domainMin[3], const Scalar domainMax[3]) const; // Returns the terrain height at the given world X,Y position by sampling the depth image, using domain bounds for coordinate mapping
 	};
 
 #endif

@@ -83,7 +83,7 @@ DinosaurEcosystem::TerrainInfo DinosaurEcosystem::queryTerrain(const Point& pos)
 	{
 	/* Debug: limit output to first N calls */
 	static int debugCount = 0;
-	bool doDebug = (debugCount < 10);
+	bool doDebug = (debugCount < 5);
 	if(doDebug) ++debugCount;
 
 	TerrainInfo info;
@@ -91,33 +91,26 @@ DinosaurEcosystem::TerrainInfo DinosaurEcosystem::queryTerrain(const Point& pos)
 	info.waterDepth = 0.0;
 	info.isLava = false;
 
-	if(doDebug)
+	/* Get terrain height from depth image using domain bounds for coordinate mapping */
+	if(waterTable != 0)
 		{
-		std::cout << "queryTerrain: pos=(" << pos[0] << ", " << pos[1] << ", " << pos[2] << ")" << std::endl;
-		if(waterTable != 0)
-			{
-			const WaterTable2::Box& domain = waterTable->getDomain();
-			std::cout << "  waterTable domain: X[" << domain.min[0] << " to " << domain.max[0] << "]"
-			          << " Y[" << domain.min[1] << " to " << domain.max[1] << "]"
-			          << " Z[" << domain.min[2] << " to " << domain.max[2] << "]" << std::endl;
-			}
-		std::cout << "  depthRenderer=" << (depthRenderer != 0 ? "yes" : "no") << std::endl;
-		}
-
-	/* Try to get actual terrain height from depth image */
-	if(depthRenderer != 0)
-		{
-		info.elevation = depthRenderer->getHeightAt(pos[0], pos[1]);
-		if(doDebug)
-			std::cout << "  -> from depthRenderer: elevation=" << info.elevation << std::endl;
-		}
-	else if(waterTable != 0)
-		{
-		/* Fallback: use domain midpoint if no depth renderer */
 		const WaterTable2::Box& domain = waterTable->getDomain();
-		info.elevation = (domain.min[2] + domain.max[2]) * 0.5;
-		if(doDebug)
-			std::cout << "  -> from waterTable fallback: elevation=" << info.elevation << std::endl;
+		Scalar domainMin[3] = {domain.min[0], domain.min[1], domain.min[2]};
+		Scalar domainMax[3] = {domain.max[0], domain.max[1], domain.max[2]};
+
+		if(depthRenderer != 0)
+			{
+			info.elevation = depthRenderer->getHeightAt(pos[0], pos[1], domainMin, domainMax);
+			if(doDebug)
+				std::cout << "queryTerrain: pos=(" << pos[0] << "," << pos[1] << ") -> elevation=" << info.elevation << std::endl;
+			}
+		else
+			{
+			/* Fallback to domain midpoint */
+			info.elevation = (domain.min[2] + domain.max[2]) * 0.5;
+			if(doDebug)
+				std::cout << "queryTerrain: fallback elevation=" << info.elevation << std::endl;
+			}
 		}
 
 	/* Check if below lava threshold */
