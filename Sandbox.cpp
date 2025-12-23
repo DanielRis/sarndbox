@@ -653,6 +653,8 @@ Sandbox::Sandbox(int& argc,char**& argv)
 				}
 			else if(strcasecmp(argv[i]+1,"er")==0)
 				{
+				if(i+2>=argc)
+					Misc::throwStdErr("Sandbox: Missing arguments for -er flag (expected: -er <min> <max>)");
 				++i;
 				double elevationMin=atof(argv[i]);
 				++i;
@@ -661,6 +663,8 @@ Sandbox::Sandbox(int& argc,char**& argv)
 				}
 			else if(strcasecmp(argv[i]+1,"hmp")==0)
 				{
+				if(i+4>=argc)
+					Misc::throwStdErr("Sandbox: Missing arguments for -hmp flag (expected: -hmp <x> <y> <z> <offset>)");
 				/* Read height mapping plane coefficients: */
 				haveHeightMapPlane=true;
 				double hmp[4];
@@ -679,6 +683,8 @@ Sandbox::Sandbox(int& argc,char**& argv)
 				}
 			else if(strcasecmp(argv[i]+1,"sp")==0)
 				{
+				if(i+2>=argc)
+					Misc::throwStdErr("Sandbox: Missing arguments for -sp flag (expected: -sp <minSamples> <maxVariance>)");
 				++i;
 				minNumSamples=atoi(argv[i]);
 				++i;
@@ -691,6 +697,8 @@ Sandbox::Sandbox(int& argc,char**& argv)
 				}
 			else if(strcasecmp(argv[i]+1,"wts")==0)
 				{
+				if(i+2>=argc)
+					Misc::throwStdErr("Sandbox: Missing arguments for -wts flag (expected: -wts <width> <height>)");
 				for(int j=0;j<2;++j)
 					{
 					++i;
@@ -699,6 +707,8 @@ Sandbox::Sandbox(int& argc,char**& argv)
 				}
 			else if(strcasecmp(argv[i]+1,"ws")==0)
 				{
+				if(i+2>=argc)
+					Misc::throwStdErr("Sandbox: Missing arguments for -ws flag (expected: -ws <speed> <maxSteps>)");
 				++i;
 				waterSpeed=atof(argv[i]);
 				++i;
@@ -706,6 +716,8 @@ Sandbox::Sandbox(int& argc,char**& argv)
 				}
 			else if(strcasecmp(argv[i]+1,"rer")==0)
 				{
+				if(i+2>=argc)
+					Misc::throwStdErr("Sandbox: Missing arguments for -rer flag (expected: -rer <min> <max>)");
 				++i;
 				double rainElevationMin=atof(argv[i]);
 				++i;
