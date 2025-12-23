@@ -32,9 +32,9 @@ static const DinosaurSpeciesInfo speciesInfoTable[DINO_NUM_SPECIES] =
 		"Triceratops",
 		"triceratops",
 		ROLE_HERBIVORE,
-		0.015,   // walkSpeed - moderate
-		0.035,   // runSpeed - decent escape speed
-		0.15,    // sightRange - can see predators approaching
+		2.0,     // walkSpeed - 2 body lengths/sec
+		4.0,     // runSpeed - 4 body lengths/sec
+		15.0,    // sightRange - 15 body lengths
 		0.0,     // attackRange - herbivore doesn't attack
 		{15, 15, 15, 15, 15, 15} // frames per action (Idle, Walk, Run, Attack, Die, TakeDamage)
 		},
@@ -44,9 +44,9 @@ static const DinosaurSpeciesInfo speciesInfoTable[DINO_NUM_SPECIES] =
 		"Stegosaurus",
 		"stegosaurus",
 		ROLE_HERBIVORE,
-		0.010,   // walkSpeed - slow
-		0.025,   // runSpeed - not very fast
-		0.12,    // sightRange
+		1.5,     // walkSpeed - 1.5 body lengths/sec (slow)
+		3.0,     // runSpeed - 3 body lengths/sec
+		12.0,    // sightRange - 12 body lengths
 		0.0,     // attackRange
 		{15, 15, 15, 15, 15, 15}
 		},
@@ -56,9 +56,9 @@ static const DinosaurSpeciesInfo speciesInfoTable[DINO_NUM_SPECIES] =
 		"Parasaurolophus",
 		"parasaurolophus",
 		ROLE_HERBIVORE,
-		0.018,   // walkSpeed - quick walker
-		0.045,   // runSpeed - very fast runner
-		0.18,    // sightRange - alert, spots danger early
+		2.5,     // walkSpeed - 2.5 body lengths/sec (quick)
+		5.0,     // runSpeed - 5 body lengths/sec (fast runner)
+		18.0,    // sightRange - 18 body lengths (alert)
 		0.0,     // attackRange
 		{15, 15, 15, 15, 15, 15}
 		},
@@ -68,9 +68,9 @@ static const DinosaurSpeciesInfo speciesInfoTable[DINO_NUM_SPECIES] =
 		"Gallimimus",
 		"gallimimus",
 		ROLE_HERBIVORE,
-		0.022,   // walkSpeed - fast walker
-		0.055,   // runSpeed - fastest herbivore
-		0.20,    // sightRange - very alert
+		3.0,     // walkSpeed - 3 body lengths/sec (fast walker)
+		6.0,     // runSpeed - 6 body lengths/sec (fastest herbivore)
+		20.0,    // sightRange - 20 body lengths (very alert)
 		0.0,     // attackRange
 		{15, 15, 15, 15, 15, 15}
 		},
@@ -80,10 +80,10 @@ static const DinosaurSpeciesInfo speciesInfoTable[DINO_NUM_SPECIES] =
 		"T-Rex",
 		"t_rex",
 		ROLE_PREDATOR,
-		0.012,   // walkSpeed - lumbering
-		0.030,   // runSpeed - not as fast as it looks
-		0.25,    // sightRange - excellent vision
-		0.025,   // attackRange - big bite radius
+		1.5,     // walkSpeed - 1.5 body lengths/sec (lumbering)
+		4.0,     // runSpeed - 4 body lengths/sec
+		25.0,    // sightRange - 25 body lengths (excellent vision)
+		2.0,     // attackRange - 2 body lengths (big bite radius)
 		{15, 15, 15, 15, 15, 15}
 		},
 
@@ -92,10 +92,10 @@ static const DinosaurSpeciesInfo speciesInfoTable[DINO_NUM_SPECIES] =
 		"Velociraptor",
 		"velociraptor",
 		ROLE_PREDATOR,
-		0.020,   // walkSpeed - quick
-		0.050,   // runSpeed - very fast
-		0.18,    // sightRange
-		0.015,   // attackRange - smaller
+		2.5,     // walkSpeed - 2.5 body lengths/sec
+		5.5,     // runSpeed - 5.5 body lengths/sec (very fast)
+		18.0,    // sightRange - 18 body lengths
+		1.5,     // attackRange - 1.5 body lengths
 		{15, 15, 15, 15, 15, 15}
 		},
 
@@ -104,10 +104,10 @@ static const DinosaurSpeciesInfo speciesInfoTable[DINO_NUM_SPECIES] =
 		"Blue Raptor",
 		"blue_raptor",
 		ROLE_PREDATOR,
-		0.020,
-		0.050,
-		0.18,
-		0.015,
+		2.5,     // walkSpeed - 2.5 body lengths/sec
+		5.5,     // runSpeed - 5.5 body lengths/sec
+		18.0,    // sightRange - 18 body lengths
+		1.5,     // attackRange - 1.5 body lengths
 		{15, 15, 15, 15, 15, 15}
 		},
 
@@ -116,10 +116,10 @@ static const DinosaurSpeciesInfo speciesInfoTable[DINO_NUM_SPECIES] =
 		"Green Raptor",
 		"green_raptor",
 		ROLE_PREDATOR,
-		0.020,
-		0.050,
-		0.18,
-		0.015,
+		2.5,     // walkSpeed - 2.5 body lengths/sec
+		5.5,     // runSpeed - 5.5 body lengths/sec
+		18.0,    // sightRange - 18 body lengths
+		1.5,     // attackRange - 1.5 body lengths
 		{15, 15, 15, 15, 15, 15}
 		},
 
@@ -128,10 +128,10 @@ static const DinosaurSpeciesInfo speciesInfoTable[DINO_NUM_SPECIES] =
 		"Red Raptor",
 		"red_raptor",
 		ROLE_PREDATOR,
-		0.020,
-		0.050,
-		0.18,
-		0.015,
+		2.5,     // walkSpeed - 2.5 body lengths/sec
+		5.5,     // runSpeed - 5.5 body lengths/sec
+		18.0,    // sightRange - 18 body lengths
+		1.5,     // attackRange - 1.5 body lengths
 		{15, 15, 15, 15, 15, 15}
 		}
 	};
@@ -160,9 +160,9 @@ DinosaurDirection calculateDirection(const Vector& velocity)
 		return DIR_S; // Default facing south
 
 	/* Calculate angle from velocity vector
-	   Note: In sandbox coordinates, +Y is typically "up" on the projection,
-	   and +X is to the right. Angle 0 = East, 90 = North, etc. */
-	double angle = std::atan2(velocity[1], velocity[0]) * 180.0 / M_PI;
+	   Note: In sandbox coordinates with top-down projector view,
+	   the Y-axis may be inverted. We negate velocity to face movement direction. */
+	double angle = std::atan2(-velocity[1], -velocity[0]) * 180.0 / M_PI;
 
 	/* Normalize to 0-360 range */
 	if(angle < 0.0)
