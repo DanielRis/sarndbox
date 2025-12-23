@@ -31,6 +31,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 
 /* Forward declarations */
 class WaterTable2;
+class DepthImageRenderer;
 
 class DinosaurEcosystem
 	{
@@ -56,7 +57,8 @@ class DinosaurEcosystem
 	private:
 
 	/* Elements: */
-	const WaterTable2* waterTable;      // For terrain/water queries
+	const WaterTable2* waterTable;           // For terrain/water queries
+	const DepthImageRenderer* depthRenderer; // For terrain height sampling
 	Bounds bounds;                       // Sandbox boundaries
 	std::vector<Dinosaur> dinosaurs;     // All dinosaur instances
 	unsigned int nextDinosaurId;         // For unique IDs
@@ -128,6 +130,9 @@ class DinosaurEcosystem
 
 	/* Set lava elevation threshold */
 	void setLavaThreshold(Scalar threshold);
+
+	/* Set the depth image renderer for terrain height sampling */
+	void setDepthImageRenderer(const DepthImageRenderer* renderer);
 
 	/* Spawn initial population */
 	void spawnInitialPopulation(void);

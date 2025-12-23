@@ -403,3 +403,39 @@ void DepthImageRenderer::renderElevation(const PTransform& projectionModelview,G
 	/* Unbind the elevation rendering shader: */
 	glUseProgramObjectARB(0);
 	}
+
+Scalar DepthImageRenderer::getHeightAt(Scalar worldX, Scalar worldY) const
+	{
+	/* Use inverse projection to find pixel coordinates */
+	/* Assume z=0 (base plane level) for initial pixel lookup */
+	Point worldPoint(worldX, worldY, Scalar(0));
+
+	/* Invert the projection to go from world space to depth image space */
+	PTransform invProj = Geometry::invert(depthProjection);
+	Point depthImagePoint = invProj.transform(worldPoint);
+
+	/* Extract pixel coordinates */
+	int px = int(depthImagePoint[0]);
+	int py = int(depthImagePoint[1]);
+
+	/* Check bounds */
+	if(px < 0 || py < 0 ||
+	   px >= int(depthImageSize[0]) ||
+	   py >= int(depthImageSize[1]))
+		return Scalar(0);
+
+	/* Sample depth from the depth image */
+	const float* depthData = depthImage.getData<float>();
+	if(depthData == 0)
+		return Scalar(0);
+
+	float depth = depthData[py * depthImageSize[0] + px];
+	if(depth <= 0.0f)
+		return Scalar(0);
+
+	/* Transform back to world space with actual depth to get world Z */
+	Point actualDepthPoint(depthImagePoint[0], depthImagePoint[1], Scalar(depth));
+	Point actualWorldPoint = depthProjection.transform(actualDepthPoint);
+
+	return actualWorldPoint[2];
+	}

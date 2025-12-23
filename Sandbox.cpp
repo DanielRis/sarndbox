@@ -1101,6 +1101,9 @@ Sandbox::Sandbox(int& argc,char**& argv)
 		dinoBounds.maxZ=bbox.max[2];
 		dinosaurEcosystem->setBounds(dinoBounds);
 
+		/* Set depth image renderer for terrain height sampling */
+		dinosaurEcosystem->setDepthImageRenderer(depthImageRenderer);
+
 		/* Spawn initial dinosaur population */
 		dinosaurEcosystem->spawnInitialPopulation();
 

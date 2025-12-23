@@ -28,6 +28,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #include <chrono>
 
 #include "WaterTable2.h"
+#include "DepthImageRenderer.h"
 
 /**********************************
 Methods of class DinosaurEcosystem:
@@ -35,6 +36,7 @@ Methods of class DinosaurEcosystem:
 
 DinosaurEcosystem::DinosaurEcosystem(const WaterTable2* sWaterTable)
 	:waterTable(sWaterTable),
+	 depthRenderer(0),
 	 nextDinosaurId(0),
 	 randomFloat(0.0f, 1.0f),
 	 lavaElevationThreshold(-10.0),  // Below this is lava
@@ -72,6 +74,11 @@ void DinosaurEcosystem::setLavaThreshold(Scalar threshold)
 	lavaElevationThreshold = threshold;
 	}
 
+void DinosaurEcosystem::setDepthImageRenderer(const DepthImageRenderer* renderer)
+	{
+	depthRenderer = renderer;
+	}
+
 DinosaurEcosystem::TerrainInfo DinosaurEcosystem::queryTerrain(const Point& pos) const
 	{
 	TerrainInfo info;
@@ -79,25 +86,17 @@ DinosaurEcosystem::TerrainInfo DinosaurEcosystem::queryTerrain(const Point& pos)
 	info.waterDepth = 0.0;
 	info.isLava = false;
 
-	if(waterTable == 0)
-		return info;
-
-	/* Get terrain data from water table's domain */
-	const WaterTable2::Box& domain = waterTable->getDomain();
-	const GLfloat* cellSize = waterTable->getCellSize();
-	const GLsizei* gridSize = waterTable->getSize();
-
-	/* Transform position to grid coordinates */
-	Scalar gx = (pos[0] - domain.min[0]) / cellSize[0];
-	Scalar gy = (pos[1] - domain.min[1]) / cellSize[1];
-
-	/* Clamp to grid bounds */
-	int ix = std::max(0, std::min(int(gx), int(gridSize[0]) - 2));
-	int iy = std::max(0, std::min(int(gy), int(gridSize[1]) - 2));
-
-	/* Use terrain midpoint elevation from domain
-	   A more accurate implementation would sample the bathymetry texture */
-	info.elevation = (domain.min[2] + domain.max[2]) * 0.5;
+	/* Try to get actual terrain height from depth image */
+	if(depthRenderer != 0)
+		{
+		info.elevation = depthRenderer->getHeightAt(pos[0], pos[1]);
+		}
+	else if(waterTable != 0)
+		{
+		/* Fallback: use domain midpoint if no depth renderer */
+		const WaterTable2::Box& domain = waterTable->getDomain();
+		info.elevation = (domain.min[2] + domain.max[2]) * 0.5;
+		}
 
 	/* Check if below lava threshold */
 	info.isLava = (info.elevation < lavaElevationThreshold);
@@ -133,21 +132,17 @@ bool DinosaurEcosystem::isPositionSafe(const Point& pos) const
 
 Point DinosaurEcosystem::findValidSpawnPosition(void)
 	{
-	/* Get terrain Z from water table domain */
-	Scalar terrainZ = 0.0;
-	if(waterTable != 0)
-		{
-		const WaterTable2::Box& domain = waterTable->getDomain();
-		terrainZ = (domain.min[2] + domain.max[2]) * 0.5;
-		}
-
 	/* Try random positions until we find a safe one */
 	for(int attempts = 0; attempts < 100; ++attempts)
 		{
 		Point pos;
 		pos[0] = bounds.minX + randomFloat(rng) * (bounds.maxX - bounds.minX);
 		pos[1] = bounds.minY + randomFloat(rng) * (bounds.maxY - bounds.minY);
-		pos[2] = terrainZ;
+		pos[2] = 0.0; // Will be updated from terrain query
+
+		/* Get actual terrain height at this position */
+		TerrainInfo terrain = queryTerrain(pos);
+		pos[2] = terrain.elevation;
 
 		if(isPositionSafe(pos))
 			return pos;
@@ -157,7 +152,12 @@ Point DinosaurEcosystem::findValidSpawnPosition(void)
 	Point center;
 	center[0] = (bounds.minX + bounds.maxX) * 0.5;
 	center[1] = (bounds.minY + bounds.maxY) * 0.5;
-	center[2] = terrainZ;
+	center[2] = 0.0;
+
+	/* Get terrain height at center */
+	TerrainInfo terrain = queryTerrain(center);
+	center[2] = terrain.elevation;
+
 	return center;
 	}
 
