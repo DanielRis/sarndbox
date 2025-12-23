@@ -288,6 +288,7 @@ CalibrateProjector::CalibrateProjector(int& argc,char**& argv)
 	if(generateTest)
 		{
 		/* Generate a test identity projection matrix */
+		{
 		IO::FilePtr projFile=IO::openFile(projectionMatrixFileName.c_str(),IO::File::WriteOnly);
 		projFile->setEndianness(Misc::LittleEndian);
 
@@ -295,6 +296,7 @@ CalibrateProjector::CalibrateProjector(int& argc,char**& argv)
 		for(int i=0;i<4;++i)
 			for(int j=0;j<4;++j)
 				projFile->write<double>(i==j ? 1.0 : 0.0);
+		} /* File closed here when projFile goes out of scope */
 
 		std::cout<<"Generated test projection matrix: "<<projectionMatrixFileName<<std::endl;
 		exit(0);
