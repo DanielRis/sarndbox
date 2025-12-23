@@ -28,6 +28,24 @@ apt-get install -y \
     mesa-utils \
     git curl
 
+# Install Kinect udev rules for non-root USB access
+echo ""
+echo "Installing Kinect udev rules..."
+cat > /etc/udev/rules.d/90-kinect.rules << 'EOF'
+# Kinect v1 (Xbox 360)
+SUBSYSTEM=="usb", ATTR{idVendor}=="045e", ATTR{idProduct}=="02b0", MODE="0666"
+SUBSYSTEM=="usb", ATTR{idVendor}=="045e", ATTR{idProduct}=="02ad", MODE="0666"
+SUBSYSTEM=="usb", ATTR{idVendor}=="045e", ATTR{idProduct}=="02ae", MODE="0666"
+SUBSYSTEM=="usb", ATTR{idVendor}=="045e", ATTR{idProduct}=="02bf", MODE="0666"
+
+# Kinect v2 (Xbox One)
+SUBSYSTEM=="usb", ATTR{idVendor}=="045e", ATTR{idProduct}=="02c4", MODE="0666"
+SUBSYSTEM=="usb", ATTR{idVendor}=="045e", ATTR{idProduct}=="02d8", MODE="0666"
+SUBSYSTEM=="usb", ATTR{idVendor}=="045e", ATTR{idProduct}=="02d9", MODE="0666"
+EOF
+udevadm control --reload-rules
+udevadm trigger
+
 # Build libfreenect2
 echo ""
 echo "[2/4] Building libfreenect2..."
@@ -87,9 +105,12 @@ echo "========================================"
 echo ""
 echo "Installed:"
 echo "  - System packages (OpenGL, CUDA, dev libraries)"
+echo "  - Kinect udev rules (non-root USB access)"
 echo "  - libfreenect2 (Kinect v2 driver with CUDA)"
 echo "  - Vrui 8.0 (VR toolkit framework)"
 echo "  - Kinect 3.10 (Kinect integration library)"
+echo ""
+echo "IMPORTANT: Unplug and replug your Kinect for udev rules to take effect!"
 echo ""
 echo "You can now build SARndbox:"
 echo "  cd sarndbox"
