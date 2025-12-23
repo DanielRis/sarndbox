@@ -69,6 +69,7 @@ class DinosaurEcosystem
 
 	/* Simulation parameters */
 	Scalar lavaElevationThreshold;       // Elevation below which is "lava"
+	Scalar waterLevelThreshold;          // Elevation below which water pools
 	Scalar waterAvoidanceDepth;          // Water depth to start avoiding
 	Scalar handFleeRadius;               // Distance to flee from hands
 	Scalar predatorSightRange;           // How far predators can see prey
@@ -131,6 +132,9 @@ class DinosaurEcosystem
 
 	/* Set lava elevation threshold */
 	void setLavaThreshold(Scalar threshold);
+
+	/* Set water level threshold (elevation below which water pools) */
+	void setWaterLevelThreshold(Scalar threshold);
 
 	/* Set the depth image renderer for terrain height sampling */
 	void setDepthImageRenderer(const DepthImageRenderer* renderer);

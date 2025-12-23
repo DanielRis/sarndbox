@@ -1101,6 +1101,11 @@ Sandbox::Sandbox(int& argc,char**& argv)
 		dinoBounds.maxZ=bbox.max[2];
 		dinosaurEcosystem->setBounds(dinoBounds);
 
+		/* Set water level threshold - water pools below ~30% of elevation range */
+		Scalar waterLevel = dinoBounds.minZ + (dinoBounds.maxZ - dinoBounds.minZ) * 0.3;
+		dinosaurEcosystem->setWaterLevelThreshold(waterLevel);
+		std::cout << "Dinosaur water level threshold: " << waterLevel << std::endl;
+
 		/* Set depth image renderer for terrain height sampling */
 		dinosaurEcosystem->setDepthImageRenderer(depthImageRenderer);
 

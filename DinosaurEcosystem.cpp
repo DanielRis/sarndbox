@@ -40,7 +40,8 @@ DinosaurEcosystem::DinosaurEcosystem(const WaterTable2* sWaterTable)
 	 nextDinosaurId(0),
 	 randomFloat(0.0f, 1.0f),
 	 lavaElevationThreshold(-10.0),  // Below this is lava
-	 waterAvoidanceDepth(0.5),       // Avoid water deeper than this
+	 waterLevelThreshold(0.0),       // Will be set from domain bounds
+	 waterAvoidanceDepth(0.1),       // Small threshold to trigger on any water
 	 handFleeRadius(0.15),           // Flee from hands within this radius
 	 predatorSightRange(0.20),       // Predators can see this far
 	 fleeDistance(0.25),             // Flee this far before calming down
@@ -73,6 +74,11 @@ void DinosaurEcosystem::setBounds(const Bounds& newBounds)
 void DinosaurEcosystem::setLavaThreshold(Scalar threshold)
 	{
 	lavaElevationThreshold = threshold;
+	}
+
+void DinosaurEcosystem::setWaterLevelThreshold(Scalar threshold)
+	{
+	waterLevelThreshold = threshold;
 	}
 
 void DinosaurEcosystem::setDepthImageRenderer(const DepthImageRenderer* renderer)
@@ -122,12 +128,21 @@ DinosaurEcosystem::TerrainInfo DinosaurEcosystem::queryTerrain(const Point& pos)
 	/* Check if below lava threshold */
 	info.isLava = (info.elevation < lavaElevationThreshold);
 
-	/* Water depth would need to be queried from water quantity texture
-	   For now, estimate based on low areas */
-	if(info.elevation < lavaElevationThreshold + 5.0)
-		info.waterDepth = 0.0; // Lava, not water
+	/* Estimate water depth based on water level threshold
+	   Water pools in areas below the threshold */
+	if(info.isLava)
+		{
+		info.waterDepth = 0.0; // Lava area, no water
+		}
+	else if(info.elevation < waterLevelThreshold)
+		{
+		/* Terrain is below water level - estimate water depth */
+		info.waterDepth = waterLevelThreshold - info.elevation;
+		}
 	else
-		info.waterDepth = 0.0; // TODO: Query actual water level
+		{
+		info.waterDepth = 0.0; // Above water level
+		}
 
 	return info;
 	}
@@ -445,8 +460,8 @@ Point DinosaurEcosystem::calculateHerdCenter(const Dinosaur& dino) const
 
 Point DinosaurEcosystem::chooseWanderTarget(const Dinosaur& dino)
 	{
-	/* Choose a random point within wander radius */
-	Scalar wanderRadius = 0.15;
+	/* Wander within 30% of sandbox width */
+	Scalar wanderRadius = (bounds.maxX - bounds.minX) * 0.3;
 
 	for(int attempts = 0; attempts < 20; ++attempts)
 		{
@@ -462,12 +477,12 @@ Point DinosaurEcosystem::chooseWanderTarget(const Dinosaur& dino)
 			return target;
 		}
 
-	/* Fallback: move toward center */
-	Point center;
-	center[0] = (bounds.minX + bounds.maxX) * 0.5;
-	center[1] = (bounds.minY + bounds.maxY) * 0.5;
-	center[2] = dino.position[2];
-	return center;
+	/* Fallback: random position within bounds (not just center) */
+	Point target;
+	target[0] = bounds.minX + randomFloat(rng) * (bounds.maxX - bounds.minX);
+	target[1] = bounds.minY + randomFloat(rng) * (bounds.maxY - bounds.minY);
+	target[2] = dino.position[2];
+	return target;
 	}
 
 void DinosaurEcosystem::updateDinosaurAI(Dinosaur& dino, float deltaTime)
@@ -796,6 +811,23 @@ void DinosaurEcosystem::updateDinosaurMovement(Dinosaur& dino, float deltaTime)
 	/* Update elevation (terrain following) */
 	TerrainInfo terrain = queryTerrain(dino.position);
 	Scalar targetZ = terrain.elevation;
+
+	/* Check for hazards - despawn if in lava or water */
+	if(terrain.isLava || terrain.waterDepth > waterAvoidanceDepth)
+		{
+		/* Dinosaur walked into hazard - trigger death */
+		dino.isAlive = false;
+		dino.aiState = AI_DYING;
+		dino.currentAction = ACTION_DIE;
+		dino.currentFrame = 0;
+		dino.stateTimer = 0.0f;
+		dino.velocity = Vector(0.0, 0.0, 0.0);
+
+		const DinosaurSpeciesInfo& info = getSpeciesInfo(dino.species);
+		std::cout << "DinosaurEcosystem: " << info.name
+		          << " #" << dino.id << " fell into hazard!" << std::endl;
+		return;
+		}
 
 	/* Smooth elevation following */
 	Scalar elevationSpeed = 0.1;
