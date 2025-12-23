@@ -25,9 +25,10 @@
 # directory was changed during Vrui's installation, the directory below
 # must be adapted.
 VRUI_MAKEDIR := /usr/local/share/Vrui-8.0/make
-ifdef DEBUG
-  VRUI_MAKEDIR := $(VRUI_MAKEDIR)/debug
-endif
+# Note: Vrui debug makefile directory doesn't exist, so we pass debug flags directly
+# ifdef DEBUG
+#   VRUI_MAKEDIR := $(VRUI_MAKEDIR)/debug
+# endif
 
 # Base installation directory for the Augmented Reality Sandbox. If this
 # is set to the default of $(PWD), the Augmented Reality Sandbox does
@@ -209,7 +210,7 @@ install: $(ALL)
 # Build with debug symbols
 .PHONY: debug
 debug:
-	$(MAKE) DEBUG=1 CFLAGS="-g -O0" CXXFLAGS="-g -O0"
+	$(MAKE) CFLAGS="-g -O0 -DDEBUG" CXXFLAGS="-g -O0 -DDEBUG"
 
 # Run SARndbox with gdb attached
 .PHONY: gdb
