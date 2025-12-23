@@ -25,6 +25,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #include <iostream>
 #include <stdexcept>
 #include <cmath>
+#include <vector>
 
 #include <Images/RGBImage.h>
 #include <Images/RGBAImage.h>
@@ -86,22 +87,7 @@ GLuint DinosaurRenderer::DataItem::getOrLoadTexture(const std::string& path)
 		return it->second;
 
 	/* Load image using Vrui's Images library */
-	Images::RGBImage rgbImage;
-	try
-		{
-		rgbImage = Images::readImageFile(path.c_str());
-		}
-	catch(const std::exception& e)
-		{
-		std::cerr << "DinosaurRenderer: Failed to load sprite: " << path << " (" << e.what() << ")" << std::endl;
-		return 0;
-		}
-
-	/* Get image dimensions */
-	unsigned int width = rgbImage.getSize(0);
-	unsigned int height = rgbImage.getSize(1);
-
-	/* Create OpenGL texture */
+	unsigned int width, height;
 	GLuint textureId;
 	glGenTextures(1, &textureId);
 	glBindTexture(GL_TEXTURE_2D, textureId);
@@ -112,16 +98,29 @@ GLuint DinosaurRenderer::DataItem::getOrLoadTexture(const std::string& path)
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-	/* Upload texture data as RGB (sprites will need color-keying for transparency) */
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0,
-	             GL_RGB, GL_UNSIGNED_BYTE, rgbImage.getPixels());
+	/* Try loading as RGBA with transparency support */
+	try
+		{
+		Images::RGBAImage rgbaImage = Images::readTransparentImageFile(path.c_str());
+		width = rgbaImage.getSize(0);
+		height = rgbaImage.getSize(1);
+
+		/* Upload texture data as RGBA for proper transparency */
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0,
+		             GL_RGBA, GL_UNSIGNED_BYTE, rgbaImage.getPixels());
+
+		std::cout << "DinosaurRenderer: Loaded RGBA sprite " << path
+		          << " (" << width << "x" << height << ")" << std::endl;
+		}
+	catch(const std::exception& e)
+		{
+		std::cerr << "DinosaurRenderer: Failed to load sprite: " << path << " (" << e.what() << ")" << std::endl;
+		glDeleteTextures(1, &textureId);
+		return 0;
+		}
 
 	/* Cache and return */
 	spriteTextures[path] = textureId;
-
-	std::cout << "DinosaurRenderer: Loaded sprite " << path
-	          << " (" << width << "x" << height << ")" << std::endl;
-
 	return textureId;
 	}
 
