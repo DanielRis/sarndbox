@@ -202,3 +202,22 @@ install: $(ALL)
 	@install -d $(DESTDIR)$(SHAREINSTALLDIR)/Sprites
 	@cp -r $(RESOURCEDIR)/Sprites/* $(DESTDIR)$(SHAREINSTALLDIR)/Sprites/
 
+########################################################################
+# Debug targets
+########################################################################
+
+# Build with debug symbols
+.PHONY: debug
+debug:
+	$(MAKE) DEBUG=1 CFLAGS="-g -O0" CXXFLAGS="-g -O0"
+
+# Run SARndbox with gdb attached
+.PHONY: gdb
+gdb: $(EXEDIR)/SARndbox
+	gdb --args $(EXEDIR)/SARndbox -uhm -fpv
+
+# Run SARndbox with gdb and dinosaurs enabled
+.PHONY: gdb-dino
+gdb-dino: $(EXEDIR)/SARndbox
+	gdb --args $(EXEDIR)/SARndbox -uhm -fpv -dino
+

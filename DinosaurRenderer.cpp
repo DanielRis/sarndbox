@@ -165,6 +165,11 @@ void DinosaurRenderer::initContext(GLContextData& contextData) const
 
 	/* Create the sprite rendering shader */
 	dataItem->spriteShader = linkVertexAndFragmentShader("SpriteShader");
+	if(dataItem->spriteShader == 0)
+		{
+		std::cerr << "DinosaurRenderer: Failed to compile SpriteShader" << std::endl;
+		return;
+		}
 	GLint* ulPtr = dataItem->spriteShaderUniforms;
 	*(ulPtr++) = glGetUniformLocationARB(dataItem->spriteShader, "spriteSampler");
 	*(ulPtr++) = glGetUniformLocationARB(dataItem->spriteShader, "projectionModelviewMatrix");
@@ -197,6 +202,8 @@ void DinosaurRenderer::render(
 
 	/* Get the data item: */
 	DataItem* dataItem = contextData.retrieveDataItem<DataItem>(this);
+	if(dataItem == 0 || dataItem->spriteShader == 0)
+		return;
 
 	/* Calculate the combined projection-modelview matrix */
 	PTransform projectionModelview = projection;
