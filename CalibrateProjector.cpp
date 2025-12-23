@@ -287,18 +287,26 @@ CalibrateProjector::CalibrateProjector(int& argc,char**& argv)
 	/* Check if we should generate a test projection matrix: */
 	if(generateTest)
 		{
-		/* Generate a test identity projection matrix */
+		/* Generate a demo projection matrix for ~2m projector distance */
 		{
 		IO::FilePtr projFile=IO::openFile(projectionMatrixFileName.c_str(),IO::File::WriteOnly);
 		projFile->setEndianness(Misc::LittleEndian);
 
-		/* Write identity 4x4 matrix (row-major) */
-		for(int i=0;i<4;++i)
-			for(int j=0;j<4;++j)
-				projFile->write<double>(i==j ? 1.0 : 0.0);
+		/* Write demo projection matrix (row-major) for sandbox at ~200cm:
+		   - sx=0.02, sy=0.025: Scale ~100x75cm sandbox to clip space
+		   - sz=0.005, tz=-1: Depth mapping
+		   - pz=-0.002, pw=1.5: Perspective (keeps w positive for z=0..300cm) */
+		double demoMatrix[16] = {
+			0.02,   0.0,    0.0,    0.0,    // Row 0: x scale
+			0.0,    0.025,  0.0,    0.0,    // Row 1: y scale
+			0.0,    0.0,    0.005, -1.0,    // Row 2: z mapping
+			0.0,    0.0,   -0.002,  1.5     // Row 3: perspective
+		};
+		for(int i=0;i<16;++i)
+			projFile->write<double>(demoMatrix[i]);
 		} /* File closed here when projFile goes out of scope */
 
-		std::cout<<"Generated test projection matrix: "<<projectionMatrixFileName<<std::endl;
+		std::cout<<"Generated demo projection matrix: "<<projectionMatrixFileName<<std::endl;
 		exit(0);
 		}
 
