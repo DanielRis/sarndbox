@@ -34,27 +34,18 @@ void main()
 	/* gl_Vertex contains the quad corner offset (-0.5 to 0.5)
 	   and gl_MultiTexCoord0 contains the base texture coordinate (0 to 1) */
 
-	/* Calculate the right vector from the modelview matrix
-	   This ensures sprites always face the camera/projector */
-	vec3 rightVector = vec3(
-		projectionModelviewMatrix[0][0],
-		projectionModelviewMatrix[1][0],
-		projectionModelviewMatrix[2][0]
-	);
-	rightVector = normalize(rightVector);
+	/* For top-down sandbox view, sprites lie flat on the X-Y plane
+	   X axis = world X (right)
+	   Y axis = world Y (forward/back)
+	   The sprite "up" direction becomes world Y */
+	vec3 rightVector = vec3(1.0, 0.0, 0.0);   // World X axis
+	vec3 forwardVector = vec3(0.0, 1.0, 0.0); // World Y axis
 
-	/* Calculate the forward vector (perpendicular to both right and up) */
-	vec3 forwardVector = cross(rightVector, upVector);
-	forwardVector = normalize(forwardVector);
-
-	/* Recalculate right to ensure orthogonality */
-	rightVector = cross(upVector, forwardVector);
-	rightVector = normalize(rightVector);
-
-	/* Calculate world position of this vertex */
+	/* Calculate world position of this vertex
+	   Sprite lies flat on terrain at spritePosition.z */
 	vec3 worldPos = spritePosition
 	              + rightVector * gl_Vertex.x * spriteSize.x
-	              + upVector * gl_Vertex.y * spriteSize.y;
+	              + forwardVector * gl_Vertex.y * spriteSize.y;
 
 	/* Transform to clip space */
 	gl_Position = projectionModelviewMatrix * vec4(worldPos, 1.0);
