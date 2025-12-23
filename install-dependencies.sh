@@ -36,7 +36,7 @@ rm -rf libfreenect2
 git clone https://github.com/OpenKinect/libfreenect2.git
 cd libfreenect2
 mkdir -p build && cd build
-cmake .. -DCMAKE_INSTALL_PREFIX=/usr/local
+cmake .. -DCMAKE_INSTALL_PREFIX=/usr/local -DENABLE_VAAPI=OFF
 make -j$(nproc)
 make install
 install -m 755 bin/Protonect /usr/local/bin/
