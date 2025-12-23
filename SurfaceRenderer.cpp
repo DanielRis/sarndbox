@@ -393,10 +393,10 @@ GLhandleARB SurfaceRenderer::createSinglePassSurfaceShader(const GLLightTracker&
 			fragmentDeclarations+="\
 				void addWaterColor(in vec2,inout vec4);\n\
 				void addWaterColorAdvected(inout vec4);\n";
-			
+
 			/* Compile the water handling shader: */
 			shaders.push_back(compileFragmentShader("SurfaceAddWaterColor"));
-			
+
 			/* Call water coloring function from fragment shader's main function: */
 			if(advectWaterTexture)
 				{
@@ -413,7 +413,23 @@ GLhandleARB SurfaceRenderer::createSinglePassSurfaceShader(const GLLightTracker&
 					\n";
 				}
 			}
-		
+
+		if(comicStyle)
+			{
+			/* Declare the comic style function: */
+			fragmentDeclarations+="\
+				void applyComicStyle(inout vec4);\n";
+
+			/* Compile the comic style shader: */
+			shaders.push_back(compileFragmentShader("SurfaceComicStyle"));
+
+			/* Call comic style function from fragment shader's main function: */
+			fragmentMain+="\
+				/* Apply comic/cartoon posterization effect: */\n\
+				applyComicStyle(baseColor);\n\
+				\n";
+			}
+
 		/* Finish the fragment shader's main function: */
 		fragmentMain+="\
 			/* Assign the final color to the fragment: */\n\
@@ -480,6 +496,12 @@ GLhandleARB SurfaceRenderer::createSinglePassSurfaceShader(const GLLightTracker&
 			*(ulPtr++)=glGetUniformLocationARB(result,"waterCellSize");
 			*(ulPtr++)=glGetUniformLocationARB(result,"waterOpacity");
 			*(ulPtr++)=glGetUniformLocationARB(result,"waterAnimationTime");
+			*(ulPtr++)=glGetUniformLocationARB(result,"comicStyle");
+			}
+		if(comicStyle)
+			{
+			/* Query comic style uniform variables: */
+			*(ulPtr++)=glGetUniformLocationARB(result,"comicColorLevels");
 			}
 		*(ulPtr++)=glGetUniformLocationARB(result,"projectionModelviewDepthProjection");
 		}
@@ -585,6 +607,7 @@ SurfaceRenderer::SurfaceRenderer(const DepthImageRenderer* sDepthImageRenderer)
 	 dem(0),demDistScale(1.0f),
 	 illuminate(false),
 	 waterTable(0),advectWaterTexture(false),waterOpacity(2.0f),
+	 comicStyle(false),comicColorLevels(6),
 	 surfaceSettingsVersion(1),
 	 animationTime(0.0)
 	{
@@ -609,6 +632,7 @@ SurfaceRenderer::SurfaceRenderer(const DepthImageRenderer* sDepthImageRenderer)
 	fileMonitor.addPath((std::string(CONFIG_SHADERDIR)+std::string("/SurfaceAddContourLines.fs")).c_str(),IO::FileMonitor::Modified,Misc::createFunctionCall(this,&SurfaceRenderer::shaderSourceFileChanged));
 	fileMonitor.addPath((std::string(CONFIG_SHADERDIR)+std::string("/SurfaceIlluminate.fs")).c_str(),IO::FileMonitor::Modified,Misc::createFunctionCall(this,&SurfaceRenderer::shaderSourceFileChanged));
 	fileMonitor.addPath((std::string(CONFIG_SHADERDIR)+std::string("/SurfaceAddWaterColor.fs")).c_str(),IO::FileMonitor::Modified,Misc::createFunctionCall(this,&SurfaceRenderer::shaderSourceFileChanged));
+	fileMonitor.addPath((std::string(CONFIG_SHADERDIR)+std::string("/SurfaceComicStyle.fs")).c_str(),IO::FileMonitor::Modified,Misc::createFunctionCall(this,&SurfaceRenderer::shaderSourceFileChanged));
 	fileMonitor.startPolling();
 	}
 
@@ -756,9 +780,21 @@ void SurfaceRenderer::setAnimationTime(double newAnimationTime)
 	{
 	/* Set the new animation time: */
 	animationTime=newAnimationTime;
-	
+
 	/* Poll the file monitor: */
 	fileMonitor.processEvents();
+	}
+
+void SurfaceRenderer::setComicStyle(bool newComicStyle)
+	{
+	comicStyle=newComicStyle;
+	++surfaceSettingsVersion;
+	}
+
+void SurfaceRenderer::setComicColorLevels(int levels)
+	{
+	/* Clamp to valid range: */
+	comicColorLevels=levels<3?3:(levels>10?10:levels);
 	}
 
 void SurfaceRenderer::renderSinglePass(const int viewport[4],const PTransform& projection,const OGTransform& modelview,GLContextData& contextData) const
@@ -922,8 +958,17 @@ void SurfaceRenderer::renderSinglePass(const int viewport[4],const PTransform& p
 		
 		/* Upload the water animation time: */
 		glUniform1fARB(*(ulPtr++),GLfloat(animationTime));
+
+		/* Upload the comic style flag for water shader: */
+		glUniform1iARB(*(ulPtr++),comicStyle?1:0);
 		}
-	
+
+	if(comicStyle)
+		{
+		/* Upload the comic style color levels: */
+		glUniform1iARB(*(ulPtr++),comicColorLevels);
+		}
+
 	/* Upload the combined projection, modelview, and depth unprojection matrix: */
 	PTransform projectionModelviewDepthProjection=projectionModelview;
 	projectionModelviewDepthProjection*=depthImageRenderer->getDepthProjection();

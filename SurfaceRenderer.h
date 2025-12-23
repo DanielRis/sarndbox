@@ -95,7 +95,10 @@ class SurfaceRenderer:public GLObject
 	WaterTable2* waterTable; // Pointer to the water table object; if NULL, water is ignored
 	bool advectWaterTexture; // Flag whether water texture coordinates are advected to visualize water flow
 	GLfloat waterOpacity; // Scaling factor for water opacity
-	
+
+	bool comicStyle; // Flag for comic/cartoon rendering style
+	int comicColorLevels; // Number of discrete color levels for posterization (default: 6)
+
 	unsigned int surfaceSettingsVersion; // Version number of surface settings to invalidate surface rendering shader on changes
 	double animationTime; // Time value for water animation
 	
@@ -126,6 +129,9 @@ class SurfaceRenderer:public GLObject
 	void setAdvectWaterTexture(bool newAdvectWaterTexture); // Sets the water texture coordinate advection flag
 	void setWaterOpacity(GLfloat newWaterOpacity); // Sets the water opacity factor
 	void setAnimationTime(double newAnimationTime); // Sets the time for water animation in seconds
+	void setComicStyle(bool newComicStyle); // Enables or disables comic/cartoon rendering style
+	void setComicColorLevels(int levels); // Sets the number of discrete color levels for posterization (3-10)
+	bool getComicStyle(void) const { return comicStyle; } // Returns comic style state
 	void renderSinglePass(const int viewport[4],const PTransform& projection,const OGTransform& modelview,GLContextData& contextData) const; // Renders the surface in a single pass using the current surface settings
 	#if 0
 	void renderGlobalAmbientHeightMap(GLuint heightColorMapTexture,GLContextData& contextData) const; // Renders the global ambient component of the surface as an illuminated height map in the current OpenGL context using the given pixel-corner elevation texture and 1D height color map

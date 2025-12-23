@@ -168,6 +168,7 @@ Sandbox::RenderSettings::RenderSettings(void)
 	 elevationColorMap(0),
 	 useContourLines(true),contourLineSpacing(0.75f),
 	 renderWaterSurface(false),waterOpacity(2.0f),
+	 comicStyle(false),
 	 surfaceRenderer(0),waterRenderer(0)
 	{
 	/* Load the default projector transformation: */
@@ -181,6 +182,7 @@ Sandbox::RenderSettings::RenderSettings(const Sandbox::RenderSettings& source)
 	 elevationColorMap(source.elevationColorMap!=0?new ElevationColorMap(*source.elevationColorMap):0),
 	 useContourLines(source.useContourLines),contourLineSpacing(source.contourLineSpacing),
 	 renderWaterSurface(source.renderWaterSurface),waterOpacity(source.waterOpacity),
+	 comicStyle(source.comicStyle),
 	 surfaceRenderer(0),waterRenderer(0)
 	{
 	}
@@ -795,6 +797,10 @@ Sandbox::Sandbox(int& argc,char**& argv)
 				++i;
 				renderSettings.back().waterOpacity=GLfloat(atof(argv[i]));
 				}
+			else if(strcasecmp(argv[i]+1,"comic")==0)
+				renderSettings.back().comicStyle=true;
+			else if(strcasecmp(argv[i]+1,"nocomic")==0)
+				renderSettings.back().comicStyle=false;
 			else if(strcasecmp(argv[i]+1,"cp")==0)
 				{
 				++i;
@@ -1026,6 +1032,7 @@ Sandbox::Sandbox(int& argc,char**& argv)
 		rsIt->surfaceRenderer->setContourLineDistance(rsIt->contourLineSpacing);
 		rsIt->surfaceRenderer->setElevationColorMap(rsIt->elevationColorMap);
 		rsIt->surfaceRenderer->setIlluminate(rsIt->hillshade);
+		rsIt->surfaceRenderer->setComicStyle(rsIt->comicStyle);
 		if(waterTable!=0)
 			{
 			if(rsIt->renderWaterSurface)
@@ -1381,6 +1388,27 @@ void Sandbox::frame(void)
 						}
 					else
 						std::cerr<<"Wrong number of arguments for contourLineSpacing control pipe command"<<std::endl;
+					}
+				else if(isToken(tokens[0],"comicStyle"))
+					{
+					if(tokens.size()==2)
+						{
+						/* Parse the command parameter: */
+						if(isToken(tokens[1],"on")||isToken(tokens[1],"off"))
+							{
+							/* Enable or disable comic style on all surface renderers: */
+							bool enable=isToken(tokens[1],"on");
+							for(std::vector<RenderSettings>::iterator rsIt=renderSettings.begin();rsIt!=renderSettings.end();++rsIt)
+								{
+								rsIt->comicStyle=enable;
+								rsIt->surfaceRenderer->setComicStyle(enable);
+								}
+							}
+						else
+							std::cerr<<"Invalid parameter "<<tokens[1]<<" for comicStyle control pipe command"<<std::endl;
+						}
+					else
+						std::cerr<<"Wrong number of arguments for comicStyle control pipe command"<<std::endl;
 					}
 				else if(isToken(tokens[0],"dippingBed"))
 					{

@@ -145,6 +145,7 @@ uniform sampler2DRect quantitySampler;
 uniform vec2 waterCellSize;
 uniform float waterOpacity;
 uniform float waterAnimationTime;
+uniform bool comicStyle; // Flag for cartoon water style
 
 varying vec2 waterTexCoord; // Texture coordinate for water level texture
 
@@ -161,25 +162,46 @@ void addWaterColor(in vec2 fragCoord,inout vec4 baseColor)
 	         texture2DRect(bathymetrySampler,vec2(waterTexCoord.x-1.0,waterTexCoord.y)).r+
 	         texture2DRect(bathymetrySampler,waterTexCoord.xy).r)*0.25;
 	float waterLevel=texture2DRect(quantitySampler,waterTexCoord).r-b;
-	
+
 	/* Check if the surface is under water: */
 	if(waterLevel>0.0)
 		{
-		/* Calculate the water color: */
-		// float colorW=max(snoise(vec3(fragCoord*0.05,waterAnimationTime*0.25)),0.0); // Simple noise function
-		// float colorW=max(turb(vec3(fragCoord*0.05,waterAnimationTime*0.25)),0.0); // Turbulence noise
-		
-		vec3 wn=normalize(vec3((texture2DRect(quantitySampler,vec2(waterTexCoord.x-1.0,waterTexCoord.y)).r-
-		                        texture2DRect(quantitySampler,vec2(waterTexCoord.x+1.0,waterTexCoord.y)).r)*waterCellSize.y,
-		                       (texture2DRect(quantitySampler,vec2(waterTexCoord.x,waterTexCoord.y-1.0)).r-
-		                        texture2DRect(quantitySampler,vec2(waterTexCoord.x,waterTexCoord.y+1.0)).r)*waterCellSize.x,
-		                       2.0*waterCellSize.x*waterCellSize.y));
-		float colorW=pow(dot(wn,normalize(vec3(0.075,0.075,1.0))),100.0)*1.0-0.0;
-		
-		vec4 waterColor=vec4(colorW,colorW,1.0,1.0); // Water
-		// vec4 waterColor=vec4(1.0-colorW,1.0-colorW*2.0,0.0,1.0); // Lava
-		// vec4 waterColor=vec4(0.0,0.0,1.0,1.0); // Blue
-		
+		vec4 waterColor;
+
+		if(comicStyle)
+			{
+			/* Cartoon water effect: concentric animated wave rings */
+			float dist = length(fragCoord * 0.015);
+			float wave = sin(dist * 10.0 - waterAnimationTime * 4.0) * 0.5 + 0.5;
+			wave = floor(wave * 4.0) / 4.0; // Posterize to 4 levels for cartoon look
+
+			/* Bright cartoon blue colors */
+			vec3 deepBlue = vec3(0.1, 0.45, 0.95);
+			vec3 lightBlue = vec3(0.5, 0.85, 1.0);
+			waterColor = vec4(mix(deepBlue, lightBlue, wave), 1.0);
+
+			/* Add cartoon sparkle highlights */
+			float sparkle = step(0.96, fract(sin(dot(fragCoord * 0.1, vec2(12.9898, 78.233)) + waterAnimationTime * 2.0) * 43758.5453));
+			waterColor.rgb += vec3(sparkle * 0.4);
+			}
+		else
+			{
+			/* Original realistic water: */
+			// float colorW=max(snoise(vec3(fragCoord*0.05,waterAnimationTime*0.25)),0.0); // Simple noise function
+			// float colorW=max(turb(vec3(fragCoord*0.05,waterAnimationTime*0.25)),0.0); // Turbulence noise
+
+			vec3 wn=normalize(vec3((texture2DRect(quantitySampler,vec2(waterTexCoord.x-1.0,waterTexCoord.y)).r-
+			                        texture2DRect(quantitySampler,vec2(waterTexCoord.x+1.0,waterTexCoord.y)).r)*waterCellSize.y,
+			                       (texture2DRect(quantitySampler,vec2(waterTexCoord.x,waterTexCoord.y-1.0)).r-
+			                        texture2DRect(quantitySampler,vec2(waterTexCoord.x,waterTexCoord.y+1.0)).r)*waterCellSize.x,
+			                       2.0*waterCellSize.x*waterCellSize.y));
+			float colorW=pow(dot(wn,normalize(vec3(0.075,0.075,1.0))),100.0)*1.0-0.0;
+
+			waterColor=vec4(colorW,colorW,1.0,1.0); // Water
+			// waterColor=vec4(1.0-colorW,1.0-colorW*2.0,0.0,1.0); // Lava
+			// waterColor=vec4(0.0,0.0,1.0,1.0); // Blue
+			}
+
 		/* Mix the water color with the base surface color based on the water level: */
 		baseColor=mix(baseColor,waterColor,min(waterLevel*waterOpacity,1.0));
 		}

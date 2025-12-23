@@ -157,6 +157,7 @@ CalibrateProjector::CalibrateProjector(int& argc,char**& argv)
 	
 	/* Process command line parameters: */
 	bool printHelp=false;
+	bool generateTest=false;
 	std::string sandboxLayoutFileName=CONFIG_CONFIGDIR;
 	sandboxLayoutFileName.push_back('/');
 	sandboxLayoutFileName.append(CONFIG_DEFAULTBOXLAYOUTFILENAME);
@@ -238,6 +239,10 @@ CalibrateProjector::CalibrateProjector(int& argc,char**& argv)
 				if(i<argc)
 					projectionMatrixFileName=argv[i];
 				}
+			else if(strcasecmp(argv[i]+1,"test")==0)
+				{
+				generateTest=true;
+				}
 			}
 		}
 	
@@ -274,8 +279,27 @@ CalibrateProjector::CalibrateProjector(int& argc,char**& argv)
 		std::cout<<"  -pmf <projection matrix file name>"<<std::endl;
 		std::cout<<"     Saves the calibration matrix to the file of the given name"<<std::endl;
 		std::cout<<"     Default: "<<CONFIG_CONFIGDIR<<'/'<<CONFIG_DEFAULTPROJECTIONMATRIXFILENAME<<std::endl;
+		std::cout<<"  -test"<<std::endl;
+		std::cout<<"     Generates a test projection matrix file"<<std::endl;
+		std::cout<<"     (does not require camera hardware)"<<std::endl;
 		}
-	
+
+	/* Check if we should generate a test projection matrix: */
+	if(generateTest)
+		{
+		/* Generate a test identity projection matrix */
+		IO::FilePtr projFile=IO::openFile(projectionMatrixFileName.c_str(),IO::File::WriteOnly);
+		projFile->setEndianness(Misc::LittleEndian);
+
+		/* Write identity 4x4 matrix (row-major) */
+		for(int i=0;i<4;++i)
+			for(int j=0;j<4;++j)
+				projFile->write<double>(i==j ? 1.0 : 0.0);
+
+		std::cout<<"Generated test projection matrix: "<<projectionMatrixFileName<<std::endl;
+		exit(0);
+		}
+
 	/* Read the sandbox layout file: */
 	{
 	IO::ValueSource layoutSource(IO::openFile(sandboxLayoutFileName.c_str()));
