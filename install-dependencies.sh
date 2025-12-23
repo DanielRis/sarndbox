@@ -66,6 +66,7 @@ cmake .. -DCMAKE_INSTALL_PREFIX=/usr/local \
     -DCMAKE_CUDA_ARCHITECTURES=61
 make -j$(nproc)
 make install
+install -m 755 bin/Protonect /usr/local/bin/
 cd /tmp && rm -rf libfreenect2
 
 # Build Vrui 8.0
