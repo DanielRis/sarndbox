@@ -544,6 +544,8 @@ void printUsage(void)
 	std::cout<<"     Default: 2.0"<<std::endl;
 	std::cout<<"  -cp <control pipe name>"<<std::endl;
 	std::cout<<"     Sets the name of a named POSIX pipe from which to read control commands"<<std::endl;
+	std::cout<<"  -dino"<<std::endl;
+	std::cout<<"     Enables dinosaur ecosystem simulation and rendering"<<std::endl;
 	}
 
 }
@@ -598,6 +600,7 @@ Sandbox::Sandbox(int& argc,char**& argv)
 	
 	/* Process command line parameters: */
 	bool printHelp=false;
+	bool enableDinosaurs=false;
 	const char* frameFilePrefix=0;
 	const char* kinectServerName=0;
 	bool useRemoteServer=false;
@@ -797,6 +800,8 @@ Sandbox::Sandbox(int& argc,char**& argv)
 				++i;
 				controlPipeName=argv[i];
 				}
+			else if(strcasecmp(argv[i]+1,"dino")==0)
+				enableDinosaurs=true;
 			else
 				std::cerr<<"Ignoring unrecognized command line switch "<<argv[i]<<std::endl;
 			}
@@ -1050,7 +1055,7 @@ Sandbox::Sandbox(int& argc,char**& argv)
 	/* Initialize the dinosaur ecosystem */
 	dinosaurEcosystem=0;
 	dinosaurRenderer=0;
-	dinosaursEnabled=true;
+	dinosaursEnabled=enableDinosaurs;
 	if(waterTable!=0)
 		{
 		/* Create dinosaur ecosystem and renderer */
