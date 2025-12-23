@@ -10,14 +10,12 @@ RUN if [ "${REINSTALL_CMAKE_VERSION_FROM_SOURCE}" != "none" ]; then \
     fi \
     && rm -f /tmp/reinstall-cmake.sh
 
-# Install dependencies required for Vrui, Kinect, and libfreenect2 (Kinect v2)
-# Includes CUDA toolkit + GCC 12 (CUDA requires GCC <= 12) for GPU depth processing
+# Install dependencies required for Vrui, Kinect, and libfreenect2
+# Based on official UC Davis SARndbox instructions
 RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
     && apt-get -y install --no-install-recommends \
         build-essential \
         g++ \
-        gcc-12 \
-        g++-12 \
         cmake \
         pkg-config \
         libusb-1.0-0-dev \
@@ -45,37 +43,20 @@ RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
         libopenni2-dev \
         libopenal-dev \
         fonts-freefont-ttf \
-        nvidia-cuda-toolkit \
-        nvidia-cuda-toolkit-gcc \
-        fakeroot \
-        debhelper \
-        dpkg-dev \
+        mesa-utils \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
 # Build and install libfreenect2 (for Kinect v2 / Xbox One Kinect)
-# - Use CUDA for GPU depth processing (target: GTX 1060, Pascal SM 6.1)
-# - Use GCC 12 for CUDA compatibility
-# - Disable OpenCL due to header conflicts with OpenCL 3.0
-# - Suppress packed-member warning that newer GCC treats as error (no upstream fix)
-# See: https://aur.archlinux.org/packages/libfreenect2
+# Uses CPU/OpenGL for depth processing (no CUDA required)
 WORKDIR /tmp
 RUN git clone https://github.com/OpenKinect/libfreenect2.git \
     && cd libfreenect2 \
-    # Download missing helper_math.h from CUDA samples
-    && curl -L -o include/internal/helper_math.h \
-        https://raw.githubusercontent.com/NVIDIA/cuda-samples/master/Common/helper_math.h \
     && mkdir build && cd build \
     && cmake .. -DCMAKE_INSTALL_PREFIX=/usr/local \
-        -DCMAKE_C_COMPILER=gcc-12 \
-        -DCMAKE_CXX_COMPILER=g++-12 \
-        -DCMAKE_CXX_FLAGS="-Wno-error=address-of-packed-member" \
-        -DCUDA_HOST_COMPILER=/usr/bin/gcc-12 \
-        -DENABLE_OPENCL=OFF \
-        -DENABLE_CUDA=ON \
-        -DCMAKE_CUDA_ARCHITECTURES=61 \
     && make -j$(nproc) \
     && make install \
+    && install -m 755 bin/Protonect /usr/local/bin/ \
     && cd /tmp \
     && rm -rf libfreenect2
 
