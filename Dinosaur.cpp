@@ -194,12 +194,12 @@ std::string getSpritesheetPath(DinosaurSpecies species, DinosaurAction action)
 	{
 	const DinosaurSpeciesInfo& info = speciesInfoTable[species];
 
-	/* Build relative path: <Species>/<Action>_Shadowless.png
+	/* Build relative path: <species>/<action>_shadowless.png
 	   DinosaurRenderer prepends CONFIG_SPRITEDIR */
 	std::string path = info.spritePath;
 	path += "/";
 	path += actionNames[action];
-	path += "_Shadowless.png";
+	path += "_shadowless.png";
 
 	return path;
 	}
