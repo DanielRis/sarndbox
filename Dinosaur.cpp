@@ -30,7 +30,7 @@ static const DinosaurSpeciesInfo speciesInfoTable[DINO_NUM_SPECIES] =
 	// DINO_TRICERATOPS - sturdy herbivore, herds together
 		{
 		"Triceratops",
-		"Triceratops",
+		"triceratops",
 		ROLE_HERBIVORE,
 		0.015,   // walkSpeed - moderate
 		0.035,   // runSpeed - decent escape speed
@@ -42,7 +42,7 @@ static const DinosaurSpeciesInfo speciesInfoTable[DINO_NUM_SPECIES] =
 	// DINO_STEGOSAURUS - slow, peaceful grazer
 		{
 		"Stegosaurus",
-		"Stegosaurus",
+		"stegosaurus",
 		ROLE_HERBIVORE,
 		0.010,   // walkSpeed - slow
 		0.025,   // runSpeed - not very fast
@@ -54,7 +54,7 @@ static const DinosaurSpeciesInfo speciesInfoTable[DINO_NUM_SPECIES] =
 	// DINO_PARASAUROLOPHUS - skittish runner
 		{
 		"Parasaurolophus",
-		"Parasaurolophus",
+		"parasaurolophus",
 		ROLE_HERBIVORE,
 		0.018,   // walkSpeed - quick walker
 		0.045,   // runSpeed - very fast runner
@@ -66,7 +66,7 @@ static const DinosaurSpeciesInfo speciesInfoTable[DINO_NUM_SPECIES] =
 	// DINO_GALLIMIMUS - extremely fast
 		{
 		"Gallimimus",
-		"Gallimimus",
+		"gallimimus",
 		ROLE_HERBIVORE,
 		0.022,   // walkSpeed - fast walker
 		0.055,   // runSpeed - fastest herbivore
@@ -78,7 +78,7 @@ static const DinosaurSpeciesInfo speciesInfoTable[DINO_NUM_SPECIES] =
 	// DINO_TREX - slow but powerful predator
 		{
 		"T-Rex",
-		"T-Rex",
+		"t_rex",
 		ROLE_PREDATOR,
 		0.012,   // walkSpeed - lumbering
 		0.030,   // runSpeed - not as fast as it looks
@@ -90,7 +90,7 @@ static const DinosaurSpeciesInfo speciesInfoTable[DINO_NUM_SPECIES] =
 	// DINO_VELOCIRAPTOR - fast pack hunter
 		{
 		"Velociraptor",
-		"Velociraptor",
+		"velociraptor",
 		ROLE_PREDATOR,
 		0.020,   // walkSpeed - quick
 		0.050,   // runSpeed - very fast
@@ -102,7 +102,7 @@ static const DinosaurSpeciesInfo speciesInfoTable[DINO_NUM_SPECIES] =
 	// DINO_RAPTOR_BLUE - fast pack hunter variant
 		{
 		"Blue Raptor",
-		"Blue Raptor",
+		"blue_raptor",
 		ROLE_PREDATOR,
 		0.020,
 		0.050,
@@ -114,7 +114,7 @@ static const DinosaurSpeciesInfo speciesInfoTable[DINO_NUM_SPECIES] =
 	// DINO_RAPTOR_GREEN - fast pack hunter variant
 		{
 		"Green Raptor",
-		"Green Raptor",
+		"green_raptor",
 		ROLE_PREDATOR,
 		0.020,
 		0.050,
@@ -126,7 +126,7 @@ static const DinosaurSpeciesInfo speciesInfoTable[DINO_NUM_SPECIES] =
 	// DINO_RAPTOR_RED - fast pack hunter variant
 		{
 		"Red Raptor",
-		"Red Raptor",
+		"red_raptor",
 		ROLE_PREDATOR,
 		0.020,
 		0.050,
@@ -139,12 +139,12 @@ static const DinosaurSpeciesInfo speciesInfoTable[DINO_NUM_SPECIES] =
 /* Action name mapping for spritesheet filenames */
 static const char* actionNames[ACTION_NUM_ACTIONS] =
 	{
-	"Idle",
-	"Walk",
-	"Run",
-	"Attack1",  // Using Attack1 as default attack animation
-	"Die",
-	"TakeDamage"
+	"idle",
+	"walk",
+	"run",
+	"attack1",  // Using attack1 as default attack animation
+	"die",
+	"takedamage"
 	};
 
 const DinosaurSpeciesInfo& getSpeciesInfo(DinosaurSpecies species)
