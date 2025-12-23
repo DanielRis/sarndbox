@@ -546,8 +546,9 @@ void printUsage(void)
 	std::cout<<"     Default: 2.0"<<std::endl;
 	std::cout<<"  -cp <control pipe name>"<<std::endl;
 	std::cout<<"     Sets the name of a named POSIX pipe from which to read control commands"<<std::endl;
-	std::cout<<"  -dino"<<std::endl;
+	std::cout<<"  -dino [<scale>]"<<std::endl;
 	std::cout<<"     Enables dinosaur ecosystem simulation and rendering"<<std::endl;
+	std::cout<<"     Optional scale parameter sets sprite size (default: 0.3)"<<std::endl;
 	}
 
 }
@@ -603,6 +604,7 @@ Sandbox::Sandbox(int& argc,char**& argv)
 	/* Process command line parameters: */
 	bool printHelp=false;
 	bool enableDinosaurs=false;
+	Scalar dinosaurScale=0.3;
 	const char* frameFilePrefix=0;
 	const char* kinectServerName=0;
 	bool useRemoteServer=false;
@@ -819,7 +821,14 @@ Sandbox::Sandbox(int& argc,char**& argv)
 				controlPipeName=argv[i];
 				}
 			else if(strcasecmp(argv[i]+1,"dino")==0)
+				{
 				enableDinosaurs=true;
+				if(i+1<argc && argv[i+1][0]!='-')
+					{
+					++i;
+					dinosaurScale=Scalar(atof(argv[i]));
+					}
+				}
 			else
 				std::cerr<<"Ignoring unrecognized command line switch "<<argv[i]<<std::endl;
 			}
@@ -1080,6 +1089,7 @@ Sandbox::Sandbox(int& argc,char**& argv)
 		/* Create dinosaur ecosystem and renderer */
 		dinosaurEcosystem=new DinosaurEcosystem(waterTable);
 		dinosaurRenderer=new DinosaurRenderer(waterTable);
+		dinosaurRenderer->setSpriteSize(dinosaurScale);
 
 		/* Set sandbox bounds from bbox */
 		DinosaurEcosystem::Bounds dinoBounds;
