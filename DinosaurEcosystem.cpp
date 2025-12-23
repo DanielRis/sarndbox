@@ -45,7 +45,8 @@ DinosaurEcosystem::DinosaurEcosystem(const WaterTable2* sWaterTable)
 	 predatorSightRange(0.20),       // Predators can see this far
 	 fleeDistance(0.25),             // Flee this far before calming down
 	 respawnDelay(8.0f),             // Respawn after 8 seconds
-	 animationSpeed(12.0f)           // 12 frames per second
+	 animationSpeed(12.0f),          // 12 frames per second
+	 speedScale(1.0)                 // Default speed scale
 	{
 	/* Initialize random number generator with time-based seed */
 	unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
@@ -77,6 +78,11 @@ void DinosaurEcosystem::setLavaThreshold(Scalar threshold)
 void DinosaurEcosystem::setDepthImageRenderer(const DepthImageRenderer* renderer)
 	{
 	depthRenderer = renderer;
+	}
+
+void DinosaurEcosystem::setSpeedScale(Scalar scale)
+	{
+	speedScale = scale;
 	}
 
 DinosaurEcosystem::TerrainInfo DinosaurEcosystem::queryTerrain(const Point& pos) const
@@ -521,7 +527,7 @@ void DinosaurEcosystem::updateDinosaurAI(Dinosaur& dino, float deltaTime)
 			if(mag > 0.001)
 				fleeDir = fleeDir / mag;
 
-			dino.velocity = fleeDir * info.runSpeed;
+			dino.velocity = fleeDir * info.runSpeed * speedScale;
 			dino.stateTimer = 0.0f;
 			}
 		else if(dino.aiState == AI_FLEEING)
@@ -591,7 +597,7 @@ void DinosaurEcosystem::updateDinosaurAI(Dinosaur& dino, float deltaTime)
 				{
 				/* Move toward target */
 				toTarget = toTarget / distToTarget;
-				dino.velocity = toTarget * info.walkSpeed;
+				dino.velocity = toTarget * info.walkSpeed * speedScale;
 				}
 			}
 		}
@@ -617,7 +623,7 @@ void DinosaurEcosystem::updateDinosaurAI(Dinosaur& dino, float deltaTime)
 			if(mag > 0.001)
 				fleeDir = fleeDir / mag;
 
-			dino.velocity = fleeDir * info.runSpeed;
+			dino.velocity = fleeDir * info.runSpeed * speedScale;
 			return;
 			}
 
@@ -649,7 +655,7 @@ void DinosaurEcosystem::updateDinosaurAI(Dinosaur& dino, float deltaTime)
 						dino.currentAction = ACTION_RUN;
 						if(dist > 0.001)
 							toTarget = toTarget / dist;
-						dino.velocity = toTarget * info.runSpeed;
+						dino.velocity = toTarget * info.runSpeed * speedScale;
 						}
 					break;
 					}
@@ -707,7 +713,7 @@ void DinosaurEcosystem::updateDinosaurAI(Dinosaur& dino, float deltaTime)
 			if(distToTarget > 0.02)
 				{
 				toTarget = toTarget / distToTarget;
-				dino.velocity = toTarget * info.walkSpeed;
+				dino.velocity = toTarget * info.walkSpeed * speedScale;
 				}
 			else
 				{
@@ -720,7 +726,7 @@ void DinosaurEcosystem::updateDinosaurAI(Dinosaur& dino, float deltaTime)
 	Vector avoidance = calculateAvoidanceVector(dino);
 	if(Geometry::mag(avoidance) > 0.001)
 		{
-		dino.velocity = dino.velocity + avoidance * info.walkSpeed * 0.5;
+		dino.velocity = dino.velocity + avoidance * info.walkSpeed * speedScale * 0.5;
 		}
 	}
 

@@ -75,6 +75,7 @@ class DinosaurEcosystem
 	Scalar fleeDistance;                 // How far to flee before stopping
 	float respawnDelay;                  // Seconds before respawn after death
 	float animationSpeed;                // Animation frames per second
+	Scalar speedScale;                   // Movement speed multiplier (scales with -dino parameter)
 
 	/* Hand detection data (updated externally) */
 	std::vector<Point> detectedHands;
@@ -133,6 +134,9 @@ class DinosaurEcosystem
 
 	/* Set the depth image renderer for terrain height sampling */
 	void setDepthImageRenderer(const DepthImageRenderer* renderer);
+
+	/* Set movement speed scale (should match sprite scale) */
+	void setSpeedScale(Scalar scale);
 
 	/* Spawn initial population */
 	void spawnInitialPopulation(void);

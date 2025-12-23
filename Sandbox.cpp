@@ -1104,6 +1104,9 @@ Sandbox::Sandbox(int& argc,char**& argv)
 		/* Set depth image renderer for terrain height sampling */
 		dinosaurEcosystem->setDepthImageRenderer(depthImageRenderer);
 
+		/* Set movement speed scale to match sprite size */
+		dinosaurEcosystem->setSpeedScale(dinosaurScale);
+
 		/* Spawn initial dinosaur population */
 		dinosaurEcosystem->spawnInitialPopulation();
 
