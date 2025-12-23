@@ -81,21 +81,43 @@ void DinosaurEcosystem::setDepthImageRenderer(const DepthImageRenderer* renderer
 
 DinosaurEcosystem::TerrainInfo DinosaurEcosystem::queryTerrain(const Point& pos) const
 	{
+	/* Debug: limit output to first N calls */
+	static int debugCount = 0;
+	bool doDebug = (debugCount < 10);
+	if(doDebug) ++debugCount;
+
 	TerrainInfo info;
 	info.elevation = 0.0;
 	info.waterDepth = 0.0;
 	info.isLava = false;
 
+	if(doDebug)
+		{
+		std::cout << "queryTerrain: pos=(" << pos[0] << ", " << pos[1] << ", " << pos[2] << ")" << std::endl;
+		if(waterTable != 0)
+			{
+			const WaterTable2::Box& domain = waterTable->getDomain();
+			std::cout << "  waterTable domain: X[" << domain.min[0] << " to " << domain.max[0] << "]"
+			          << " Y[" << domain.min[1] << " to " << domain.max[1] << "]"
+			          << " Z[" << domain.min[2] << " to " << domain.max[2] << "]" << std::endl;
+			}
+		std::cout << "  depthRenderer=" << (depthRenderer != 0 ? "yes" : "no") << std::endl;
+		}
+
 	/* Try to get actual terrain height from depth image */
 	if(depthRenderer != 0)
 		{
 		info.elevation = depthRenderer->getHeightAt(pos[0], pos[1]);
+		if(doDebug)
+			std::cout << "  -> from depthRenderer: elevation=" << info.elevation << std::endl;
 		}
 	else if(waterTable != 0)
 		{
 		/* Fallback: use domain midpoint if no depth renderer */
 		const WaterTable2::Box& domain = waterTable->getDomain();
 		info.elevation = (domain.min[2] + domain.max[2]) * 0.5;
+		if(doDebug)
+			std::cout << "  -> from waterTable fallback: elevation=" << info.elevation << std::endl;
 		}
 
 	/* Check if below lava threshold */
@@ -132,6 +154,9 @@ bool DinosaurEcosystem::isPositionSafe(const Point& pos) const
 
 Point DinosaurEcosystem::findValidSpawnPosition(void)
 	{
+	std::cout << "findValidSpawnPosition: bounds X[" << bounds.minX << " to " << bounds.maxX << "]"
+	          << " Y[" << bounds.minY << " to " << bounds.maxY << "]" << std::endl;
+
 	/* Try random positions until we find a safe one */
 	for(int attempts = 0; attempts < 100; ++attempts)
 		{
@@ -145,7 +170,10 @@ Point DinosaurEcosystem::findValidSpawnPosition(void)
 		pos[2] = terrain.elevation;
 
 		if(isPositionSafe(pos))
+			{
+			std::cout << "  -> FOUND spawn pos: (" << pos[0] << ", " << pos[1] << ", " << pos[2] << ")" << std::endl;
 			return pos;
+			}
 		}
 
 	/* Fallback to center if no safe position found */
@@ -158,6 +186,7 @@ Point DinosaurEcosystem::findValidSpawnPosition(void)
 	TerrainInfo terrain = queryTerrain(center);
 	center[2] = terrain.elevation;
 
+	std::cout << "  -> FALLBACK center: (" << center[0] << ", " << center[1] << ", " << center[2] << ")" << std::endl;
 	return center;
 	}
 

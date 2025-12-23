@@ -23,6 +23,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 
 #include "DepthImageRenderer.h"
 
+#include <iostream>
 #include <GL/gl.h>
 #include <GL/GLVertexArrayParts.h>
 #include <GL/GLContextData.h>
@@ -406,6 +407,14 @@ void DepthImageRenderer::renderElevation(const PTransform& projectionModelview,G
 
 Scalar DepthImageRenderer::getHeightAt(Scalar worldX, Scalar worldY) const
 	{
+	/* Debug: limit output to first N calls */
+	static int debugCount = 0;
+	bool doDebug = (debugCount < 20);
+	if(doDebug) ++debugCount;
+
+	if(doDebug)
+		std::cerr << "getHeightAt: worldX=" << worldX << " worldY=" << worldY << std::endl;
+
 	/* Use inverse projection to find pixel coordinates */
 	/* Assume z=0 (base plane level) for initial pixel lookup */
 	Point worldPoint(worldX, worldY, Scalar(0));
@@ -414,28 +423,55 @@ Scalar DepthImageRenderer::getHeightAt(Scalar worldX, Scalar worldY) const
 	PTransform invProj = Geometry::invert(depthProjection);
 	Point depthImagePoint = invProj.transform(worldPoint);
 
+	if(doDebug)
+		std::cerr << "  -> depthImagePoint: x=" << depthImagePoint[0]
+		          << " y=" << depthImagePoint[1]
+		          << " z=" << depthImagePoint[2] << std::endl;
+
 	/* Extract pixel coordinates */
 	int px = int(depthImagePoint[0]);
 	int py = int(depthImagePoint[1]);
+
+	if(doDebug)
+		std::cerr << "  -> pixel: px=" << px << " py=" << py
+		          << " (imageSize: " << depthImageSize[0] << "x" << depthImageSize[1] << ")" << std::endl;
 
 	/* Check bounds */
 	if(px < 0 || py < 0 ||
 	   px >= int(depthImageSize[0]) ||
 	   py >= int(depthImageSize[1]))
+		{
+		if(doDebug)
+			std::cerr << "  -> OUT OF BOUNDS, returning 0" << std::endl;
 		return Scalar(0);
+		}
 
 	/* Sample depth from the depth image */
 	const float* depthData = depthImage.getData<float>();
 	if(depthData == 0)
+		{
+		if(doDebug)
+			std::cerr << "  -> NO DEPTH DATA, returning 0" << std::endl;
 		return Scalar(0);
+		}
 
 	float depth = depthData[py * depthImageSize[0] + px];
+	if(doDebug)
+		std::cerr << "  -> sampled depth=" << depth << std::endl;
+
 	if(depth <= 0.0f)
+		{
+		if(doDebug)
+			std::cerr << "  -> INVALID DEPTH, returning 0" << std::endl;
 		return Scalar(0);
+		}
 
 	/* Transform back to world space with actual depth to get world Z */
 	Point actualDepthPoint(depthImagePoint[0], depthImagePoint[1], Scalar(depth));
 	Point actualWorldPoint = depthProjection.transform(actualDepthPoint);
+
+	if(doDebug)
+		std::cerr << "  -> worldZ=" << actualWorldPoint[2] << std::endl;
 
 	return actualWorldPoint[2];
 	}
