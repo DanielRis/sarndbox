@@ -25,6 +25,7 @@ apt-get install -y \
     libfreetype6-dev libturbojpeg0-dev libglfw3-dev libva-dev \
     libopenni2-dev libopenal-dev fonts-freefont-ttf \
     nvidia-cuda-toolkit nvidia-cuda-toolkit-gcc \
+    mesa-utils \
     git curl
 
 # Build libfreenect2
