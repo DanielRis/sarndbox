@@ -95,9 +95,9 @@ DinosaurEcosystem::TerrainInfo DinosaurEcosystem::queryTerrain(const Point& pos)
 	int ix = std::max(0, std::min(int(gx), int(gridSize[0]) - 2));
 	int iy = std::max(0, std::min(int(gy), int(gridSize[1]) - 2));
 
-	/* For now, estimate elevation from position
+	/* Use terrain midpoint elevation from domain
 	   A more accurate implementation would sample the bathymetry texture */
-	info.elevation = pos[2];
+	info.elevation = (domain.min[2] + domain.max[2]) * 0.5;
 
 	/* Check if below lava threshold */
 	info.isLava = (info.elevation < lavaElevationThreshold);
@@ -133,13 +133,21 @@ bool DinosaurEcosystem::isPositionSafe(const Point& pos) const
 
 Point DinosaurEcosystem::findValidSpawnPosition(void)
 	{
+	/* Get terrain Z from water table domain */
+	Scalar terrainZ = 0.0;
+	if(waterTable != 0)
+		{
+		const WaterTable2::Box& domain = waterTable->getDomain();
+		terrainZ = (domain.min[2] + domain.max[2]) * 0.5;
+		}
+
 	/* Try random positions until we find a safe one */
 	for(int attempts = 0; attempts < 100; ++attempts)
 		{
 		Point pos;
 		pos[0] = bounds.minX + randomFloat(rng) * (bounds.maxX - bounds.minX);
 		pos[1] = bounds.minY + randomFloat(rng) * (bounds.maxY - bounds.minY);
-		pos[2] = 0.0; // Will be updated by terrain following
+		pos[2] = terrainZ;
 
 		if(isPositionSafe(pos))
 			return pos;
@@ -149,7 +157,7 @@ Point DinosaurEcosystem::findValidSpawnPosition(void)
 	Point center;
 	center[0] = (bounds.minX + bounds.maxX) * 0.5;
 	center[1] = (bounds.minY + bounds.maxY) * 0.5;
-	center[2] = 0.0;
+	center[2] = terrainZ;
 	return center;
 	}
 
